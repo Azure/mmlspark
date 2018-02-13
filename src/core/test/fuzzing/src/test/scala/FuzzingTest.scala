@@ -30,8 +30,10 @@ class FuzzingTest extends TestBase {
       "com.microsoft.ml.spark.TuneHyperparameters",
       "com.microsoft.ml.spark.TrainClassifier",
       "com.microsoft.ml.spark.ComputePerInstanceStatistics",
-      "com.microsoft.ml.spark.DataConversion"
+      "com.microsoft.ml.spark.DataConversion",
+      "com.microsoft.ml.spark.TFModel"
     )
+
     val applicableStages = pipelineStages.filter(t => !exemptions(t.getClass.getName))
     val applicableClasses = applicableStages.map(_.getClass.asInstanceOf[Class[_]]).toSet
     val classToFuzzer: Map[Class[_], ExperimentFuzzing[_ <: PipelineStage]] =
@@ -53,7 +55,8 @@ class FuzzingTest extends TestBase {
       "com.microsoft.ml.spark.TrainClassifier",
       "com.microsoft.ml.spark.ComputePerInstanceStatistics",
       "com.microsoft.ml.spark.DataConversion",
-      "com.microsoft.ml.spark.TuneHyperparameters"
+      "com.microsoft.ml.spark.TuneHyperparameters",
+      "com.microsoft.ml.spark.TFModel"
     )
     val applicableStages = pipelineStages.filter(t => !exemptions(t.getClass.getName))
     val applicableClasses = applicableStages.map(_.getClass.asInstanceOf[Class[_]]).toSet
@@ -75,7 +78,8 @@ class FuzzingTest extends TestBase {
       "com.microsoft.ml.spark.TrainClassifier",
       "com.microsoft.ml.spark.ComputePerInstanceStatistics",
       "com.microsoft.ml.spark.DataConversion",
-      "com.microsoft.ml.spark.TuneHyperparameters"
+      "com.microsoft.ml.spark.TuneHyperparameters",
+      "com.microsoft.ml.spark.TFModel"
     )
     val applicableStages = pipelineStages.filter(t => !exemptions(t.getClass.getName))
     val applicableClasses = applicableStages.map(_.getClass.asInstanceOf[Class[_]]).toSet
