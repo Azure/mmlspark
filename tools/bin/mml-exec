@@ -42,6 +42,8 @@ fi
 
 MML_M2REPOS="file:$BUILD_ARTIFACTS/packages/m2,$MAVEN_URL"
 MML_PACKAGE="com.microsoft.ml.spark:mmlspark_$SCALA_VERSION:$MML_VERSION"
+echo $MML_M2REPOS
+echo $MML_PACKAGE
 
 exec "$exe" --repositories "$MML_M2REPOS" --packages "$MML_PACKAGE" \
             --master "local[*]" "${args[@]}"

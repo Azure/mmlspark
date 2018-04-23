@@ -1,0 +1,21 @@
+<!DOCTYPE ivysettings>
+<ivysettings>
+    <settings defaultResolver="default-chain"/>
+    <resolvers>
+        <ibiblio name="local1" root="file:/home/marhamil/IdeaProjects/mmlspark/BuildArtifacts/packages/m2" m2compatible="true"/>
+        <filesystem name="local2">
+            <ivy pattern="${ivy.default.ivy.user.dir}/local/[organisation]/[module]/ivys/ivy-[revision].xml"/>
+            <artifact pattern="${ivy.default.ivy.user.dir}/local/[organisation]/[module]/[type]s/[artifact]-[revision].[ext]"/>
+        </filesystem>
+        <ibiblio name="azure" root="https://mmlspark.azureedge.net/maven" m2compatible="true"/>
+        <ibiblio name="jboss" root="http://repository.jboss.org/maven2/" m2compatible="true"/>
+        <ibiblio name="ibilio" m2compatible="true"/>
+        <chain name="default-chain">
+            <resolver ref="local1"/>
+            <resolver ref="local2"/>
+            <resolver ref="azure"/>
+            <resolver ref="jboss"/>
+            <resolver ref="ibilio"/>
+        </chain>
+    </resolvers>
+</ivysettings>

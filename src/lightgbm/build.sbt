@@ -1,2 +1,2 @@
 //> DependsOn: core
-//> DependsOn: featurize
+//> DependsOn: lib

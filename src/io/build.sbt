@@ -1,1 +1,2 @@
 //> DependsOn: core
+//> DependsOn: lib

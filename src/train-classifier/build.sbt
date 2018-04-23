@@ -1,2 +1,0 @@
-//> DependsOn: core
-//> DependsOn: featurize

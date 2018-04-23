@@ -2,6 +2,7 @@
 # Licensed under the MIT License. See LICENSE in project root for information.
 
 import setuptools, os
+from setuptools import find_packages
 
 setuptools.setup(
     name = "mmlspark",
@@ -9,7 +10,7 @@ setuptools.setup(
     description = "Microsoft ML for Spark",
     long_description = "The Microsoft ML for Apache Spark package provides a python API to scala.",
     license = "MIT",
-    packages = ["mmlspark"],
+    packages = find_packages(),
 
     # Project's main homepage.
     url = "https://github.com/Azure/mmlspark",
