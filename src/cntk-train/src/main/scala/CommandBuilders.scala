@@ -267,3 +267,142 @@ class MPICommandBuilder(log: Logger,
   }
 
 }
+
+class PythonMPICommandBuilder(log: Logger,
+                              gpuMachines: Array[String],
+                              hdfsPath: Option[(String, String, String)],
+                              fileInputPath: String,
+                              username: String,
+                              pythonModelPath: String,
+                              learnerCode: String,
+                              inputData: InputData,
+                              features: String,
+                              labels: String) extends CNTKCommandBuilderBase(log) with MPIConfiguration {
+  private val defaultNumGPUs = 1
+
+  def nodeConfig: Map[String, Int] = gpuMachines.map(value => {
+    val nodeAndGpus = value.split(",")
+    (nodeAndGpus(0),
+      if (nodeAndGpus.length == 2)
+        try {
+          nodeAndGpus(1).toInt
+        } catch {
+          case ex: Exception => defaultNumGPUs
+        }
+      else defaultNumGPUs)
+  }).toMap
+
+  val argName = "-n"
+  val arguments = Seq(argName, nodeConfig.head._2.toString)
+  val identityKeyException =
+    "Please run the passwordless ssh setup: mmlspark/tools/hdi/setup-ssh-keys.sh\n" +
+      "  to create a private key.\n" +
+      "Identity file not found: "
+
+  def runCommand(): Unit = {
+    val mpiArgs = s" --npernode ${nodeConfig.head._2} "
+
+    val hadoopConf = sparkSession.sparkContext.hadoopConfiguration
+    val inputPath = new Path("wasb:///MML-GPU/identity")
+    // Get the user's home directory
+    val userHomePath = System.getProperty("user.home")
+    val identityDir = new File(new Path(userHomePath, ".ssh/MML-GPU").toString)
+    if (!identityDir.exists()) {
+      log.info(s"Creating directory $identityDir")
+      identityDir.mkdirs()
+    }
+    val identity = s"${identityDir.getAbsolutePath}/identity"
+    val identityPath = new Path(identity)
+    val outputPath = new Path(s"file:///${identityDir.getAbsolutePath}/identity")
+    // Copy from wasb to local file
+    try {
+      using(inputPath.getFileSystem(hadoopConf)) { fs =>
+        fs.copyToLocalFile(inputPath, identityPath)
+      }.get
+    } catch {
+      case e: FileNotFoundException =>
+        throw new RuntimeException(identityKeyException + e.getMessage, e)
+    }
+
+    val localDir = workingDir.toString.replaceFirst("file:/+", "/")
+    val modelPath = new Path(localDir, new Path(outputDir, "Models")).toString
+    val localOutputPath = new Path(localDir, outputDir).toString
+
+    val pythonTrainer = "distributed_train.py"
+    val pathToPythonTrainer = new Path(localDir, pythonTrainer).toString
+    val pythonArgs = s" python $pathToPythonTrainer"
+
+    val modelDir = new File(modelPath)
+    // Create the directory if it does not exist - note: this also generates the dir for python trainer file
+    if (!modelDir.exists()) modelDir.mkdirs()
+
+    // Generate the python file locally
+    val featuresShape = inputData.shapes(features)
+    val labelsShape = inputData.shapes(labels)
+    val (featuresDim, isInputSparse) = (featuresShape.dim, featuresShape.form == CNTKLearner.sparseForm)
+    val (labelsDim, isLabelSparse) = (labelsShape.dim, labelsShape.form == CNTKLearner.sparseForm)
+    val localModelPath = pythonModelPath.replaceFirst("file:/+", "/")
+    val newModelPath = s"$modelPath/ModelOut"
+    ModelBuilder.generateModel(localModelPath,
+      learnerCode,
+      newModelPath,
+      featuresDim,
+      labelsDim,
+      inputData.path,
+      isInputSparse,
+      isLabelSparse,
+      new File(pathToPythonTrainer))
+
+    val nodeName = nodeConfig.head._1
+    val gpuUser = s"$username@$nodeName"
+
+    // Give less permissive file permissions to the private RSA key
+    printOutput(Seq("hdfs", "dfs", "-chmod", "700", outputPath.toString))
+    // Copy the working directory to the GPU machines
+    printOutput(
+      Seq("scp", "-i", identity, "-r", "-o", "StrictHostKeyChecking=no", localDir, s"$gpuUser:$localDir"))
+    // Copy the python model to the GPU machines
+    printOutput(
+      Seq("scp", "-i", identity, "-r", "-o", "StrictHostKeyChecking=no", localModelPath, s"$gpuUser:$localModelPath"))
+
+    // Run commands below only if writing input data to HDFS
+    var fileDirStr: String = ""
+    if (hdfsPath.isDefined) {
+      // Add the mounted directory and all parents if it does not exist so mount will work
+      fileDirStr = new URI(hdfsPath.get._2).toString
+      if (!fileDirStr.startsWith("/")) {
+        fileDirStr = "/" + fileDirStr
+      }
+      printOutput(Seq("ssh", "-i", identity, gpuUser, "mkdir", "-p", fileDirStr))
+      val mergedInputFile = "merged-input.txt"
+      // Create local directory if it does not exist on the driver
+      val fileDirFile = new File(fileDirStr)
+      if (!fileDirFile.exists()) {
+        fileDirFile.mkdirs()
+      }
+      // Do HDFS merge to local directory
+      printOutput(Seq("hdfs", "dfs", "-getmerge", s"${hdfsPath.get._1}/*.txt", fileInputPath))
+      // scp the file to the GPU machine
+      printOutput(
+        Seq("scp", "-i", identity, "-r", "-o", "StrictHostKeyChecking=no",
+          fileInputPath, s"$gpuUser:$fileInputPath"))
+    }
+    // Activate python environment
+    val activateCmd = "source \"/home/" + username + "/cntk/activate-cntk\""
+    // Run the mpi command - need to activate the environment and run the command in the same script
+    val runMPI = "''" + s"$activateCmd; $command $mpiArgs $pythonArgs" + "''"
+    printOutput(Seq("ssh", "-i", identity, gpuUser, runMPI))
+    // Copy the model back
+    val modelOrigin = s"$gpuUser:$modelPath"
+    printOutput(Seq("scp", "-i", identity, "-r", "-o", "StrictHostKeyChecking=no", modelOrigin, localOutputPath))
+    // Cleanup: Remove the GPU machine's working directory
+    printOutput(Seq("ssh", "-i", identity, gpuUser, "rm", "-r", localDir))
+    if (hdfsPath.isDefined) {
+      // Cleanup: Remove the HDFS directory
+      printOutput(Seq("hdfs", "dfs", "-rm", "-r", s"${hdfsPath.get._1}"))
+      // Remove the temporary files on the GPU machine
+      printOutput(Seq("ssh", "-i", identity, gpuUser, "rm", "-r", fileDirStr))
+    }
+  }
+
+}

@@ -34,8 +34,8 @@ class BrainScriptBuilder {
     this
   }
 
-  def setInputFile(path: String, format: String, shapes: Map[String, InputShape]): this.type = {
-    inData = Some(InputData(format, path, shapes))
+  def setInputFile(inputData: InputData): this.type = {
+    inData = Some(inputData)
     this
   }
 

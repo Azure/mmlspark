@@ -47,6 +47,15 @@ trait CNTKParams extends MMLParams {
   def setBrainScriptFile(f: String): this.type = set(brainScript, FileUtilities.readFile(new File(f)))
   def getBrainScript: String = $(brainScript)
 
+  val pythonModelPath = StringParam(this, "pythonModelPath", "Path to location of python model")
+  def setPythonModelPath(model: String): this.type = set(pythonModelPath, model)
+  def getPythonModelPath: String = $(pythonModelPath)
+
+  // This is temporary, until the local learner can be serialized
+  val learnerCode = StringParam(this, "learnerCode", "Local learner code")
+  def setLearnerCode(code: String): this.type = set(learnerCode, code)
+  def getLearnerCode: String = $(learnerCode)
+
   val parallelTrain = BooleanParam(this, "parallelTrain", "Train using an MPI ring", true)
   def setParallelTrain(b: Boolean): this.type = set(parallelTrain, b)
   def getParallelTrain: Boolean = $(parallelTrain)
@@ -141,36 +150,57 @@ class CNTKLearner(override val uid: String) extends Estimator[CNTKModel] with CN
     val outputDir = s"$uid-outdir"
     val relativeOutRoot = s"$cntkrootPath/$outputDir"
 
+    val inputData = InputData(getDataFormat,
+      remappedInPath,
+      Map(features -> InputShape(featureDim, featureForm),
+        labels -> InputShape(labelDim, labelForm)))
     val config = new BrainScriptBuilder()
       .setOutputRoot(relativeOutRoot)
       // TODO: Refactor to more structured form of converting schema to CNTK config
-      .setInputFile(
-        remappedInPath,
-        getDataFormat,
-        Map(features -> InputShape(featureDim, featureForm),
-            labels -> InputShape(labelDim, labelForm)))
+      .setInputFile(inputData)
       .setHDFSPath(hdfsPath)
       .setWeightPrecision(getWeightPrecision)
 
+    val modelPath = config.getModelPath
+
     // Train the learner
     val cb =
-      if (getParallelTrain) new MPICommandBuilder(log, getGPUMachines, hdfsPath, remappedInPath, getUserName)
-      else new CNTKCommandBuilder(log)
-    cb.setWorkingDir(cntkrootPath)
-      .insertBaseConfig(getBrainScript)
-      .appendOverrideConfig(config.toOverrideConfig)
-      .setOutputDir(outputDir)
-      .setSparkSession(spark)
-      .setDataFormat(getDataFormat)
-      .setModelOutputDir(config.getLocalModelOutputDir)
-      .setModelName(config.getModelName)
-
-    val output = cb.runCommand
+      if (isDefined(pythonModelPath)) {
+        if (!getParallelTrain) throw new Exception("Only parallel training supported with python model")
+        new PythonMPICommandBuilder(log,
+          getGPUMachines,
+          hdfsPath,
+          remappedInPath,
+          getUserName,
+          getPythonModelPath,
+          getLearnerCode,
+          inputData,
+          features,
+          labels)
+          .setWorkingDir(cntkrootPath)
+          .setOutputDir(outputDir)
+          .setSparkSession(spark)
+          .setDataFormat(getDataFormat)
+      } else {
+        val builder =
+          if (getParallelTrain) new MPICommandBuilder(log, getGPUMachines, hdfsPath, remappedInPath, getUserName)
+          else new CNTKCommandBuilder(log)
+        builder
+          .setWorkingDir(cntkrootPath)
+          .insertBaseConfig(getBrainScript)
+          .appendOverrideConfig(config.toOverrideConfig)
+          .setOutputDir(outputDir)
+          .setSparkSession(spark)
+          .setDataFormat(getDataFormat)
+          .setModelOutputDir(config.getLocalModelOutputDir)
+          .setModelName(config.getModelName)
+      }
+    cb.runCommand
     logInfo("CNTK training finished")
     conformedData.unpersist()
     // Note: This currently runs only on linux
     new CNTKModel(uid + "-model")
-      .setModelLocation(spark, config.getModelPath)
+      .setModelLocation(spark, modelPath)
       .setInputCol(features)
       .setOutputCol(labels)
   }

@@ -15,10 +15,11 @@ class ValidateConfiguration extends TestBase {
     val config = new BrainScriptBuilder()
       .setOutputRoot(relativeOutRoot)
       .setInputFile(
-        remappedInPath,
-        dataFormat,
-        Map("features" -> InputShape(10000, "sparse"),
-            "labels" -> InputShape(1, "dense")))
+        new InputData(
+          dataFormat,
+          remappedInPath,
+          Map("features" -> InputShape(10000, "sparse"),
+            "labels" -> InputShape(1, "dense"))))
 
     val log = LoggerFactory.getLogger(this.getClass.getName.stripSuffix("$"))
     val cb = new CNTKCommandBuilder(log, false)
