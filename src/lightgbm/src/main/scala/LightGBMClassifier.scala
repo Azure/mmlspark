@@ -50,8 +50,8 @@ class LightGBMClassifier(override val uid: String)
     val numWorkers = min(numExecutorCores, dataset.rdd.getNumPartitions)
     // Reduce number of partitions to number of executor cores
     val df = dataset.toDF().coalesce(numWorkers).cache()
-    val (inetAddress, port, future) =
-      LightGBMUtils.createDriverNodesThread(numWorkers, df, log, getTimeout)
+    val (inetAddress, port, future, iters) =
+      LightGBMUtils.createDriverNodesThread(numWorkers, df, log, getTimeout, getAutoscale, getNumIterations)
 
     /* Run a parallel job via map partitions to initialize the native library and network,
      * translate the data to the LightGBM in-memory representation and train the models
@@ -75,7 +75,8 @@ class LightGBMClassifier(override val uid: String)
     val trainParams = ClassifierTrainParams(getParallelism, getNumIterations, getLearningRate, getNumLeaves,
       getMaxBin, getBaggingFraction, getBaggingFreq, getBaggingSeed, getEarlyStoppingRound,
       getFeatureFraction, getMaxDepth, getMinSumHessianInLeaf, numWorkers, getObjective, getModelString,
-      getIsUnbalance, getVerbosity, categoricalIndexes, classes, metric, getBoostFromAverage, getBoostingType)
+      getIsUnbalance, getVerbosity, categoricalIndexes, classes, metric, getBoostFromAverage, getBoostingType,
+      getAutoscale)
     log.info(s"LightGBMClassifier parameters: ${trainParams.toString}")
     val networkParams = NetworkParams(getDefaultListenPort, inetAddress, port)
 
@@ -85,9 +86,15 @@ class LightGBMClassifier(override val uid: String)
       .reduce((booster1, _) => booster1)
     // Wait for future to complete (should be done by now)
     Await.result(future, Duration(getTimeout, SECONDS))
-    new LightGBMClassificationModel(uid, lightGBMBooster, getLabelCol, getFeaturesCol,
-      getPredictionCol, getProbabilityCol, getRawPredictionCol,
-      if (isDefined(thresholds)) Some(getThresholds) else None, actualNumClasses)
+    if (iters(0) != getNumIterations) {
+      setModelString(lightGBMBooster.model)
+      setNumIterations(getNumIterations - iters(0))
+      train(dataset)
+    } else {
+      new LightGBMClassificationModel(uid, lightGBMBooster, getLabelCol, getFeaturesCol,
+        getPredictionCol, getProbabilityCol, getRawPredictionCol,
+        if (isDefined(thresholds)) Some(getThresholds) else None, actualNumClasses)
+    }
   }
 
   override def copy(extra: ParamMap): LightGBMClassifier = defaultCopy(extra)

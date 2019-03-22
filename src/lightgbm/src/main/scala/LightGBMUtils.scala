@@ -5,7 +5,7 @@ package com.microsoft.ml.spark
 
 import java.io._
 import java.net.{InetAddress, ServerSocket, Socket}
-import java.util.concurrent.Executors
+import java.util.concurrent.{ConcurrentLinkedQueue, Executors}
 
 import com.microsoft.ml.lightgbm._
 import com.microsoft.ml.spark.schema.SparkSchema
@@ -14,6 +14,7 @@ import org.apache.spark.{BlockManagerUtils, SparkEnv, TaskContext}
 import org.apache.spark.ml.PipelineModel
 import org.apache.spark.ml.attribute._
 import org.apache.spark.ml.linalg.SparseVector
+import org.apache.spark.scheduler.{SparkListener, SparkListenerExecutorAdded, SparkListenerExecutorRemoved}
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.slf4j.Logger
 
@@ -24,6 +25,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 /** Helper utilities for LightGBM learners */
 object LightGBMUtils {
+  val AUTOSCALE_INTERRUPT = "autoscale interrupt"
+  val CONTINUE_TRAINING = "continue training"
+
   def validate(result: Int, component: String): Unit = {
     if (result == -1) {
       throw new Exception(component + " call failed in LightGBM with error: "
@@ -49,6 +53,23 @@ object LightGBMUtils {
       .setOneHotEncodeCategoricals(oneHotEncodeCategoricals)
       .setNumberOfFeatures(featuresToHashTo)
     featurizer.fit(dataset)
+  }
+
+  def addListener(dataset: Dataset[_]): (ConcurrentLinkedQueue[String], SparkListener) = {
+    val queue = new ConcurrentLinkedQueue[String]()
+    val executorListener = new SparkListener() {
+      override def onExecutorAdded(executorAdded: SparkListenerExecutorAdded): Unit = {
+        queue.add("executor added")
+        ()
+      }
+
+      override def onExecutorRemoved(executorRemoved: SparkListenerExecutorRemoved): Unit = {
+        queue.add("executor removed")
+        ()
+      }
+    }
+    dataset.sparkSession.sparkContext.addSparkListener(executorListener)
+    (queue, executorListener)
   }
 
   def getBoosterPtrFromModelString(lgbModelString: String): SWIGTYPE_p_void = {
@@ -95,7 +116,8 @@ object LightGBMUtils {
     * @return The address and port of the driver socket.
     */
   def createDriverNodesThread(numWorkers: Int, df: DataFrame,
-                              log: Logger, timeout: Double): (String, Int, Future[Unit]) = {
+                              log: Logger, timeout: Double,
+                              autoscale: Boolean, iters: Int): (String, Int, Future[Unit], ListBuffer[Int]) = {
     // Start a thread and open port to listen on
     implicit val context = ExecutionContext.fromExecutor(Executors.newSingleThreadExecutor())
     val driverServerSocket = new ServerSocket(0)
@@ -104,6 +126,9 @@ object LightGBMUtils {
     if (duration.isFinite()) {
       driverServerSocket.setSoTimeout(duration.toMillis.toInt)
     }
+    // TODO: this should be passed as param in case we autoscaled earlier
+    val (listenerQueue, executorListener) = LightGBMUtils.addListener(df)
+    val currentIter = ListBuffer(iters)
     val f = Future {
       val hostAndPorts = ListBuffer[(Socket, String)]()
       log.info(s"driver expecting $numWorkers connections...")
@@ -125,6 +150,38 @@ object LightGBMUtils {
         writer.write(allConnections + "\n")
         writer.flush()
       })
+      if (autoscale) {
+        log.info(s"Autoscaling enabled, retrieving worker status during training for each iteration")
+        var autoscaleDetected = false
+        (1 to iters).iterator.takeWhile(_ => !autoscaleDetected).foreach(iter => {
+          log.info(s"driver expecting $numWorkers connections for iteration $iter")
+          currentIter(0) = iter
+          for (worker <- 1 to numWorkers) {
+            log.info(s"driver accepting a new connection from $worker")
+            val driverSocket = driverServerSocket.accept()
+            val reader = new BufferedReader(new InputStreamReader(driverSocket.getInputStream))
+            val status = reader.readLine()
+            // TODO: If status is finished with early stop, exit without interrupt
+            log.info(s"driver received status from worker: $status")
+          }
+          autoscaleDetected = !listenerQueue.isEmpty
+          val driverStatus =
+            if (autoscaleDetected) {
+              // Tell executors to save learner and exit
+              log.info(s"driver detected spark cluster autoscale")
+              df.sparkSession.sparkContext.removeSparkListener(executorListener)
+              AUTOSCALE_INTERRUPT
+            } else {
+              CONTINUE_TRAINING
+            }
+          // Return status
+          hostAndPorts.foreach(hostAndPort => {
+            val writer = new BufferedWriter(new OutputStreamWriter(hostAndPort._1.getOutputStream))
+            writer.write(driverStatus + "\n")
+            writer.flush()
+          })
+        })
+      }
       log.info("driver closing all sockets and server socket")
       hostAndPorts.foreach(_._1.close())
       driverServerSocket.close()
@@ -132,7 +189,7 @@ object LightGBMUtils {
     val host = getDriverHost(df)
     val port = driverServerSocket.getLocalPort
     log.info(s"driver waiting for connections on host: ${host} and port: $port")
-    (host, port, f)
+    (host, port, f, currentIter)
   }
 
   /** Returns an integer ID for the current node.

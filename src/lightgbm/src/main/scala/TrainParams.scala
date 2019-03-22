@@ -25,6 +25,7 @@ abstract class TrainParams extends Serializable {
   def categoricalFeatures: Array[Int]
   def boostFromAverage: Boolean
   def boostingType: String
+  def autoscale: Boolean
 
   override def toString(): String = {
     s"is_pre_partition=True boosting_type=$boostingType tree_learner=$parallelism num_iterations=$numIterations " +
@@ -47,7 +48,7 @@ case class ClassifierTrainParams(val parallelism: String, val numIterations: Int
                                  val numMachines: Int, val objective: String, val modelString: String,
                                  val isUnbalance: Boolean, val verbosity: Int, val categoricalFeatures: Array[Int],
                                  val numClass: Option[Int], val metric: String, val boostFromAverage: Boolean,
-                                 val boostingType: String)
+                                 val boostingType: String, val autoscale: Boolean)
   extends TrainParams {
   override def toString(): String = {
     val extraStr =
@@ -66,7 +67,7 @@ case class RegressorTrainParams(val parallelism: String, val numIterations: Int,
                                 val baggingSeed: Int, val earlyStoppingRound: Int, val featureFraction: Double,
                                 val maxDepth: Int, val minSumHessianInLeaf: Double, val numMachines: Int,
                                 val modelString: String, val verbosity: Int, val categoricalFeatures: Array[Int],
-                                val boostFromAverage: Boolean, val boostingType: String)
+                                val boostFromAverage: Boolean, val boostingType: String, val autoscale: Boolean)
   extends TrainParams {
   override def toString(): String = {
     s"alpha=$alpha tweedie_variance_power=$tweedieVariancePower ${super.toString}"

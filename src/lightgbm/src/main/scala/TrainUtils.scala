@@ -37,7 +37,8 @@ private object TrainUtils extends Serializable {
   }
 
   def translate(labelColumn: String, featuresColumn: String, weightColumn: Option[String], log: Logger,
-                trainParams: TrainParams, inputRows: Iterator[Row]): Iterator[LightGBMBooster] = {
+                networkParams: NetworkParams, trainParams: TrainParams,
+                inputRows: Iterator[Row]): Iterator[LightGBMBooster] = {
     if (!inputRows.hasNext)
       List[LightGBMBooster]().toIterator
 
@@ -85,15 +86,37 @@ private object TrainUtils extends Serializable {
         }
 
         val isFinishedPtr = lightgbmlib.new_intp()
-        var isFinised = 0
+        var isFinished = 0
         var iters = 0
-        while (isFinised == 0 && iters < trainParams.numIterations) {
+        var isInterrupted = false
+        while (isFinished == 0 && iters < trainParams.numIterations && !isInterrupted) {
           val result = lightgbmlib.LGBM_BoosterUpdateOneIter(boosterPtr.get, isFinishedPtr)
           LightGBMUtils.validate(result, "Booster Update One Iter")
-          isFinised = lightgbmlib.intp_value(isFinishedPtr)
+          isFinished = lightgbmlib.intp_value(isFinishedPtr)
           log.info("LightGBM running iteration: " + iters + " with result: " +
-            result + " and is finished: " + isFinised)
+            result + " and is finished: " + isFinished)
           iters = iters + 1
+          // TODO: refactor this to separate method
+          if (trainParams.autoscale) {
+            using(new Socket(networkParams.addr, networkParams.port)) {
+              driverSocket =>
+                using(Seq(new BufferedReader(new InputStreamReader(driverSocket.getInputStream())),
+                  new BufferedWriter(new OutputStreamWriter(driverSocket.getOutputStream())))) {
+                  io =>
+                    val driverInput = io(0).asInstanceOf[BufferedReader]
+                    val driverOutput = io(1).asInstanceOf[BufferedWriter]
+                    driverOutput.write(s"finished iteration\n")
+                    driverOutput.flush()
+                    // Wait to get command from driver
+                    val command = driverInput.readLine()
+                    log.debug(s"LightGBM worker received command from driver: $command")
+                    // Interrupt due to autoscale
+                    if (command == LightGBMUtils.AUTOSCALE_INTERRUPT) {
+                      isInterrupted = true
+                    }
+                }.get
+            }.get
+          }
         }
         val bufferLength = LightGBMConstants.defaultBufferLength
         val bufferLengthPtr = lightgbmlib.new_longp()
@@ -216,7 +239,7 @@ private object TrainUtils extends Serializable {
     try {
       LightGBMUtils.validate(lightgbmlib.LGBM_NetworkInit(nodes, localListenPort,
         LightGBMConstants.defaultListenTimeout, nodes.split(",").length), "Network init")
-      translate(labelColumn, featuresColumn, weightColumn, log, trainParams, inputRows)
+      translate(labelColumn, featuresColumn, weightColumn, log, networkParams, trainParams, inputRows)
     } finally {
       // Finalize network when done
       LightGBMUtils.validate(lightgbmlib.LGBM_NetworkFree(), "Finalize network")

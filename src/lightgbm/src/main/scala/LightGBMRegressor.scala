@@ -56,6 +56,9 @@ class LightGBMRegressor(override val uid: String)
   def getTweedieVariancePower: Double = $(tweedieVariancePower)
   def setTweedieVariancePower(value: Double): this.type = set(tweedieVariancePower, value)
 
+  // Set default objective to be regression
+  setDefault(objective -> "regression")
+
   /** Trains the LightGBM Regression model.
     *
     * @param dataset The input dataset to train.
@@ -67,8 +70,8 @@ class LightGBMRegressor(override val uid: String)
     val numWorkers = min(numExecutorCores, dataset.rdd.getNumPartitions)
     // Reduce number of partitions to number of executor cores if needed
     val df = dataset.toDF().coalesce(numWorkers).cache()
-    val (inetAddress, port, future) =
-      LightGBMUtils.createDriverNodesThread(numWorkers, df, log, getTimeout)
+    val (inetAddress, port, future, iters) =
+      LightGBMUtils.createDriverNodesThread(numWorkers, df, log, getTimeout, getAutoscale, getNumIterations)
 
     /* Run a parallel job via map partitions to initialize the native library and network,
      * translate the data to the LightGBM in-memory representation and train the models
@@ -82,7 +85,7 @@ class LightGBMRegressor(override val uid: String)
     val trainParams = RegressorTrainParams(getParallelism, getNumIterations, getLearningRate, getNumLeaves,
       getObjective, getAlpha, getTweedieVariancePower, getMaxBin, getBaggingFraction, getBaggingFreq, getBaggingSeed,
       getEarlyStoppingRound, getFeatureFraction, getMaxDepth, getMinSumHessianInLeaf, numWorkers, getModelString,
-      getVerbosity, categoricalIndexes, getBoostFromAverage, getBoostingType)
+      getVerbosity, categoricalIndexes, getBoostFromAverage, getBoostingType, getAutoscale)
     log.info(s"LightGBMRegressor parameters: ${trainParams.toString}")
     val networkParams = NetworkParams(getDefaultListenPort, inetAddress, port)
 
@@ -92,7 +95,13 @@ class LightGBMRegressor(override val uid: String)
       .reduce((booster1, _) => booster1)
     // Wait for future to complete (should be done by now)
     Await.result(future, Duration(getTimeout, SECONDS))
-    new LightGBMRegressionModel(uid, lightGBMBooster, getLabelCol, getFeaturesCol, getPredictionCol)
+    if (iters(0) != getNumIterations) {
+      setModelString(lightGBMBooster.model)
+      setNumIterations(getNumIterations - iters(0))
+      train(dataset)
+    } else {
+      new LightGBMRegressionModel(uid, lightGBMBooster, getLabelCol, getFeaturesCol, getPredictionCol)
+    }
   }
 
   override def copy(extra: ParamMap): LightGBMRegressor = defaultCopy(extra)

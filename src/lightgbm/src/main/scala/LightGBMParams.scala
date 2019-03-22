@@ -3,7 +3,7 @@
 
 package com.microsoft.ml.spark
 
-import org.apache.spark.ml.param._
+import org.apache.spark.ml.param.{DoubleParam, IntParam, Param}
 import org.apache.spark.ml.util.DefaultParamsWritable
 
 /** Defines common parameters across all LightGBM learners.
@@ -146,4 +146,11 @@ trait LightGBMParams extends Wrappable with DefaultParamsWritable with HasWeight
 
   def getBoostingType: String = $(boostingType)
   def setBoostingType(value: String): this.type = set(boostingType, value)
+
+  val autoscale = new BooleanParam(this, "autoscale",
+    "Enable scaling up or down, use if dynamic allocation is enabled")
+  setDefault(autoscale -> false)
+
+  def getAutoscale: Boolean = $(autoscale)
+  def setAutoscale(value: Boolean): this.type = set(autoscale, value)
 }
