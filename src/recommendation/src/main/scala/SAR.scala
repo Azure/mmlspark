@@ -7,16 +7,21 @@ import java.text.SimpleDateFormat
 import java.util.{Calendar, Date}
 
 import breeze.linalg.{CSCMatrix => BSM, DenseMatrix => BDM, Matrix => BM}
+import com.microsoft.ml.spark.schema.DatasetExtensions
+import org.apache.spark.ml
 import org.apache.spark.ml.Estimator
 import org.apache.spark.ml.param._
 import org.apache.spark.ml.recommendation.{RecommendationParams, Constants => C}
+import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.ml.util.{DefaultParamsReadable, DefaultParamsWritable, Identifiable}
 import org.apache.spark.mllib.linalg
+import org.apache.spark.mllib.linalg.distributed.{CoordinateMatrix, MatrixEntry}
 import org.apache.spark.mllib.linalg.{DenseVector, Matrices, SparseMatrix}
 import org.apache.spark.sql.functions.{col, collect_list, sum, udf, _}
-import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.types.{LongType, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset}
 
+import scala.collection.mutable
 import scala.language.existentials
 
 /**
@@ -52,6 +57,9 @@ class SAR(override val uid: String) extends Estimator[SARModel] with SARParams w
 
   /** @group getParam */
   def getTimeDecayCoeff: Int = $(timeDecayCoeff)
+
+  /** @group getParam */
+  def getItemFeatures: DataFrame = $(itemFeatures)
 
   def this() = this(Identifiable.randomUID("SAR"))
 
@@ -146,6 +154,14 @@ class SAR(override val uid: String) extends Estimator[SARModel] with SARParams w
     * @return
     */
   private[spark] def calculateItemItemSimilarity(dataset: Dataset[_]): DataFrame = {
+    //Calculate Item to Item Similarity Matrix for all warm items
+    val warmItemItemWeights = weightWarmItems(dataset).cache
+
+    //Use Warm Item Item Weights to learn Cold Items if Item Features were provided
+    optionalWeightColdItems(warmItemItemWeights)
+  }
+
+  private[spark] def weightWarmItems(dataset: Dataset[_]): DataFrame = {
 
     val itemCounts = dataset.cache
       .groupBy(col(getItemCol)).agg(countDistinct(col(getUserCol)))
@@ -201,6 +217,89 @@ class SAR(override val uid: String) extends Estimator[SARModel] with SARParams w
       .withColumn(C.itemAffinities, calculateFeature(col(getItemCol), col(C.featuresCol)))
       .select(col(getItemCol), col(C.itemAffinities))
   }
+
+  private[spark] def optionalWeightColdItems(warmItemItemWeights: DataFrame): DataFrame = {
+    get(itemFeatures)
+      .map(weightColdItems(_, warmItemItemWeights))
+      .getOrElse(warmItemItemWeights)
+  }
+
+  /**
+    * If one or both items are cold items, i.e., for which there are no transactions yet or the number of transactions
+    * is very low (below the SupportThreshold, which is configurable), their item-to-item similarity cannot be
+    * estimated from the transactions data and item features must be used. A linear learner is trained using warm
+    * items, where the features of the model are (partial) matches on corresponding features of a pair of items and
+    * the target is the computed similarity based on normalized co-occurrences of those items. The model is then used
+    * to predict similarities between cold and cold/warm items.
+    *
+    * @param itemFeaturesDF
+    * @param warmItemItemWeights
+    * @return
+    */
+  private[spark] def weightColdItems(itemFeaturesDF: Dataset[_], warmItemItemWeights: DataFrame): DataFrame = {
+
+    val sc = itemFeaturesDF.sparkSession
+
+    val itemFeatureVectors = itemFeaturesDF.select(
+      col(getItemCol).cast(LongType),
+      col(C.tagId).cast(LongType)
+    )
+      .rdd.map(r => MatrixEntry(r.getLong(0), r.getLong(1), 1.0))
+
+    val itemFeatureMatrix = new CoordinateMatrix(itemFeatureVectors)
+      .toIndexedRowMatrix()
+      .rows
+      .map(index => (index.index.toInt, index.vector))
+
+    val itemByItemFeatures =
+      itemFeatureMatrix.cartesian(itemFeatureMatrix)
+        .map { case ((item_id_i, item_i_vector), (item_id_j, item_j_vector)) =>
+          //consider if not equal 0
+          val productArray = (0 until item_i_vector.size)
+            .map(i => item_i_vector.apply(i) * item_j_vector.apply(i))
+            .toArray
+
+          (item_id_i, item_id_j, new ml.linalg.DenseVector(productArray))
+        }
+
+    val selectScore = udf((itemID: Integer, itemAffinities: Seq[Double]) => itemAffinities(itemID))
+
+    val item_i = getItemCol + "_i"
+    val item_j = getItemCol + "_j"
+
+    val itemItemTrainingData = sc.createDataFrame(itemByItemFeatures)
+      .toDF(item_i, item_j, C.featuresCol)
+      .join(warmItemItemWeights, col(getItemCol) === col(item_i))
+      .withColumn(C.label, selectScore(col(item_j), col(C.itemAffinities)))
+      .select(item_i, item_j, C.featuresCol, C.label)
+
+    val coldItems = itemItemTrainingData.where(col(C.label) < getSupportThreshold)
+
+    val columnsToArray = udf((itemId: Double, rating: Double) => Array(itemId, rating))
+
+    val coldWeightArray = DatasetExtensions.findUnusedColumnName("coldWeightArray")(itemItemTrainingData.columns.toSet)
+    val coldItemItemWeights = new LinearRegression()
+      .setMaxIter(10)
+      .setRegParam(1.0)
+      .setElasticNetParam(1.0)
+      .fit(itemItemTrainingData)
+      .transform(coldItems)
+      .withColumn(coldWeightArray, columnsToArray(col(item_j), col(C.prediction)))
+      .groupBy(item_i).agg(collect_list(col(coldWeightArray)))
+      .select(col(item_i), col("collect_list(" + coldWeightArray + ")").as(coldWeightArray))
+
+    val mergeWarmAndColdItemAffinities = udf((itemAffinities: mutable.WrappedArray[Float],
+      coldItemAffinities: Seq[Seq[Double]]) => {
+      coldItemAffinities.foreach(coldItem => itemAffinities.update(coldItem.head.toInt, coldItem(1).toFloat))
+      itemAffinities
+    })
+
+    val outputTemp = DatasetExtensions.findUnusedColumnName("output")(itemItemTrainingData.columns.toSet)
+    warmItemItemWeights
+      .join(coldItemItemWeights, col(getItemCol) === col(item_i))
+      .withColumn(outputTemp, mergeWarmAndColdItemAffinities(col(C.itemAffinities), col(coldWeightArray)))
+      .select(col(getItemCol), col(outputTemp).as(C.itemAffinities))
+  }
 }
 
 object SAR extends DefaultParamsReadable[SAR]
@@ -249,6 +348,11 @@ trait SARParams extends Wrappable with RecommendationParams {
   def setStartTimeFormat(value: String): this.type = set(startTimeFormat, value)
 
   val startTimeFormat = new Param[String](this, "startTimeFormat", "Format for start time")
+
+  /** @group setParam */
+  def setItemFeatures(value: DataFrame): this.type = set(itemFeatures, value)
+
+  val itemFeatures = new DataFrameParam(this, "itemFeatures", "Time of activity")
 
   setDefault(timeDecayCoeff -> 30, activityTimeFormat -> "yyyy/MM/dd'T'h:mm:ss", supportThreshold -> 4,
     ratingCol -> C.ratingCol, userCol -> C.userCol, itemCol -> C.itemCol, similarityFunction ->

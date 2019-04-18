@@ -22,11 +22,13 @@ class RecommendationIndexer(override val uid: String)
     val userIndexModel: StringIndexerModel = new StringIndexer()
       .setInputCol(getUserInputCol)
       .setOutputCol(getUserOutputCol)
+      .setHandleInvalid(getHandleInvalid)
       .fit(dataset)
 
     val itemIndexModel: StringIndexerModel = new StringIndexer()
       .setInputCol(getItemInputCol)
       .setOutputCol(getItemOutputCol)
+      .setHandleInvalid(getHandleInvalid)
       .fit(dataset)
 
     new RecommendationIndexerModel(uid)
@@ -98,6 +100,15 @@ class RecommendationIndexerModel(override val uid: String) extends Model[Recomme
 object RecommendationIndexerModel extends ComplexParamsReadable[RecommendationIndexerModel]
 
 trait RecommendationIndexerBase extends Params with ComplexParamsWritable {
+
+  /** @group setParam */
+  def setHandleInvalid(value: String): this.type = set(handleInvalid, value)
+
+  /** @group getParam */
+  def getHandleInvalid: String = $(handleInvalid)
+
+  val handleInvalid = new Param[String](this, "handleInvalid", "Handle Invalid")
+
   /** @group setParam */
   def setUserInputCol(value: String): this.type = set(userInputCol, value)
 
@@ -162,5 +173,7 @@ trait RecommendationIndexerBase extends Params with ComplexParamsWritable {
 
     val outputFields = inputFields :+ userAttr.toStructField() :+ itemAttr.toStructField()
     StructType(outputFields)
+
+    setDefault(handleInvalid -> "error")
   }
 }

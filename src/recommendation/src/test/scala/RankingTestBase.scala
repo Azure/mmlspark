@@ -62,6 +62,7 @@ trait RankingTestBase extends TestBase {
     .setItemInputCol(itemCol)
     .setItemOutputCol(itemColIndex)
     .setRatingCol(ratingCol)
+    .setHandleInvalid("keep")
 
   val als = new ALS()
   als
