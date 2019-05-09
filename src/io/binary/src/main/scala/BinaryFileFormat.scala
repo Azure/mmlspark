@@ -229,7 +229,17 @@ class BinaryOutputWriter(val path: String,
   override def write(row: InternalRow): Unit = {
     val bytes = row.getBinary(bytesCol)
     val filename = row.getString(pathCol)
-    val nonTempPath = new Path(path).getParent.getParent.getParent.getParent.getParent
+    val basePath = new Path(path)
+    val subPaths = (0 until basePath.depth()).map(i =>
+      (0 until i).foldLeft(basePath) {case (bp, _) => bp.getParent}.getName
+    )
+
+    val nonTempPath = if (subPaths.contains("_temporary")) {
+      basePath.getParent.getParent.getParent.getParent.getParent
+    }else {
+      basePath
+    }
+
     val outputPath = new Path(nonTempPath, filename)
     val os = fs.create(outputPath)
     try {
@@ -237,6 +247,7 @@ class BinaryOutputWriter(val path: String,
     } finally {
       os.close()
     }
+
   }
 
   override def close(): Unit = {
