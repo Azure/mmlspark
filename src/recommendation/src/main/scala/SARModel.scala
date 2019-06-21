@@ -39,6 +39,39 @@ class SARModel(override val uid: String) extends Model[SARModel]
 
   def this() = this(Identifiable.randomUID("SARModel"))
 
+  def recommendForAllUsersLarge(numItems: Int): DataFrame = {
+    val df = $(userDataFrame)
+    import df.sparkSession.implicits._
+    getUserDataFrame.withColumnRenamed($(userCol), "customerID").write.mode("overwrite")
+      .parquet("file:/tmp/users-parquet")
+    getItemDataFrame.withColumnRenamed($(itemCol), "itemID").write.mode("overwrite")
+      .parquet("file:/tmp/items-parquet")
+    println("Trying to run Python")
+
+    import sys.process._
+
+    val matmul = "file:/tmp/matmux.py"
+
+    val seed = false
+    val result = ("python " + matmul + " " + numItems + " " + seed).!
+    val pythonOutput = $(userDataFrame).sparkSession.read.parquet("file:/tmp/sampleout/*")
+
+    val zipVector = udf((list: Seq[Seq[Double]]) => {
+      list.map(f => (f(0).toInt, f(1)))
+    })
+
+    val recs = pythonOutput
+      .withColumn("recommendations", zipVector($"ratings"))
+      .select("id", "recommendations")
+
+    val arrayType = ArrayType(
+      new StructType()
+        .add($(itemCol), IntegerType)
+        .add("rating", FloatType)
+    )
+    recs.select($"id".as($(userCol)), $"recommendations".cast(arrayType))
+  }
+
   /**
     * Returns top `numItems` items recommended for each user, for all users.
     *
@@ -47,7 +80,8 @@ class SARModel(override val uid: String) extends Model[SARModel]
     *         stored as an array of (itemCol: Int, rating: Float) Rows.
     */
   def recommendForAllUsers(numItems: Int): DataFrame = {
-    recommendForAll(getUserDataFrame, getItemDataFrame, getUserCol, getItemCol, numItems)
+    recommendForAllUsersLarge(numItems)
+    //    recommendForAll(getUserDataFrame, getItemDataFrame, getUserCol, getItemCol, numItems)
   }
 
   /**
