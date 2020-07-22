@@ -4,13 +4,18 @@
 package org.apache.spark.ml
 
 import org.apache.spark.ml.image.ImageSchema
+import org.apache.spark.ml.recommendation.ALSModel
 import org.apache.spark.ml.util.Identifiable
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{DataFrame, Row}
 
 object NamespaceInjections {
 
   def pipelineModel[T <: Transformer](stages: Array[T]): PipelineModel = {
     new PipelineModel(Identifiable.randomUID("PipelineModel"), stages.asInstanceOf[Array[Transformer]])
+  }
+
+  def alsModel(uid: String, rank: Int, userFactors: DataFrame, itemFactors: DataFrame): ALSModel = {
+    new ALSModel(uid, rank, userFactors, itemFactors)
   }
 
 }

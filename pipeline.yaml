@@ -312,6 +312,8 @@ jobs:
         PACKAGE: "train"
       vw:
         PACKAGE: "vw"
+      cyber:
+        PACKAGE: "cyber"
   steps:
     - template: templates/ivy_cache_2.yml
     - task: AzureCLI@1
