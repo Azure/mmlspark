@@ -3,11 +3,14 @@
 
 package com.microsoft.ml.spark.recommendation
 
+import org.apache.spark.ml.Model
+import org.apache.spark.ml.linalg.DenseVector
 import com.microsoft.ml.spark.core.contracts.Wrappable
 import com.microsoft.ml.spark.core.env.InternalWrapper
 import org.apache.spark.ml.{ComplexParamsReadable, ComplexParamsWritable, Model}
 import org.apache.spark.ml.param.{DataFrameParam, ParamMap}
 import org.apache.spark.ml.recommendation.{BaseRecommendationModel, Constants}
+import org.apache.spark.ml.util.{ComplexParamsReadable, ComplexParamsWritable, Identifiable}
 import org.apache.spark.ml.util.Identifiable
 import org.apache.spark.mllib.linalg.DenseVector
 import org.apache.spark.mllib.linalg.distributed.{CoordinateMatrix, MatrixEntry}
@@ -108,8 +111,10 @@ class SARModel(override val uid: String) extends Model[SARModel]
         .map(item => MatrixEntry(item.getDouble(0).toLong, item.getInt(1).toLong, item.getFloat(2).toDouble))
     }
 
-    val sourceMatrix = new CoordinateMatrix(dfToRDDMatrxEntry(srcFactors)).toBlockMatrix()//.cache()
-    val destMatrix = new CoordinateMatrix(dfToRDDMatrxEntry(dstFactors)).toBlockMatrix()//.cache()
+    val sourceMatrix = new CoordinateMatrix(dfToRDDMatrxEntry(srcFactors)).toBlockMatrix().toLocalMatrix().asML
+    val destMatrix = new CoordinateMatrix(dfToRDDMatrxEntry(dstFactors)).toBlockMatrix().toLocalMatrix().asML
+//    val sourceMatrix = new CoordinateMatrix(dfToRDDMatrxEntry(srcFactors)).toBlockMatrix()//.cache()
+//    val destMatrix = new CoordinateMatrix(dfToRDDMatrxEntry(dstFactors)).toBlockMatrix()//.cache()
 
     val userToItemMatrix = sourceMatrix
       .multiply(destMatrix)
@@ -126,7 +131,13 @@ class SARModel(override val uid: String) extends Model[SARModel]
     val recommendationArrayType =
       ArrayType(new StructType(Array(SF(dstOutputColumn, IntegerType), SF(Constants.RatingCol, FloatType))))
 
-    getUserDataFrame.sparkSession.createDataFrame(userToItemMatrix)
+    val product = sourceMatrix.multiply(destMatrix.toDense)
+      .rowIter
+      .zipWithIndex
+      .map { case (vector, index) => (index, vector) }
+      .toSeq
+
+    getUserDataFrame.sparkSession.createDataFrame(product)
       .toDF(id, ratings).withColumn(recommendations, orderAndTakeTopK(col(ratings))).select(id, recommendations)
       .select(col(id).as(getUserCol), col(recommendations).cast(recommendationArrayType))
   }

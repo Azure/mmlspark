@@ -4,6 +4,9 @@
 package com.microsoft.ml.spark.recommendation
 
 import com.microsoft.ml.spark.core.test.fuzzing.{EstimatorFuzzing, TestObject, TransformerFuzzing}
+import org.apache.spark.broadcast.Broadcast
+import org.apache.spark.ml.PipelineModel
+import org.apache.spark.ml.feature.{StringIndexer, StringIndexerModel}
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.util.MLReadable
 import org.apache.spark.sql.DataFrame
@@ -63,6 +66,7 @@ class SARSpec extends RankingTestBase with EstimatorFuzzing[SAR] {
   }
 
   lazy val testFile: String = getClass.getResource("/demoUsage.csv.gz").getPath
+  lazy val demoCatalog: String = getClass.getResource("/demoCatalog.csv.gz").getPath
   lazy val simCount1: String = getClass.getResource("/sim_count1.csv.gz").getPath
   lazy val simLift1: String = getClass.getResource("/sim_lift1.csv.gz").getPath
   lazy val simJac1: String = getClass.getResource("/sim_jac1.csv.gz").getPath
@@ -79,8 +83,16 @@ class SARSpec extends RankingTestBase with EstimatorFuzzing[SAR] {
     .option("inferSchema", "true")
     .csv(testFile).na.drop.cache
 
+  private lazy val demoCatalogDataFrame: DataFrame = session.read
+    .option("header", "true") //reading the headers
+    .option("inferSchema", "true")
+    .csv(demoCatalog).na.drop.cache
+
   test("tlc test sim count1")(
     SarTLCSpec.test_affinity_matrices(tlcSampleData, 1, "cooc", simCount1, userAff))
+
+  test("tlc test sim+cold count1")(
+    SarTLCSpec.test_affinity_matrices_cold(tlcSampleData, 1, "cooc", sim_count1, user_aff, demoCatalogDataFrame))
 
   test("tlc test sim lift1")(
     SarTLCSpec.test_affinity_matrices(tlcSampleData, 1, "lift", simLift1, userAff))
@@ -235,5 +247,91 @@ object SarTLCSpec extends RankingTestBase {
     (0 to 10).foreach(i => assert(row(0).getString(i) == answer(0).getString(i)))
     (11 to 20).foreach(i => assert("%.3f".format(row(0).getFloat(i)) == "%.3f".format(answer(0).getString(i).toFloat)))
     ()
+  }
+
+  def test_affinity_matrices_cold(tlcSampleData: DataFrame, threshold: Int, similarityFunction: String, simFile: String,
+    user_aff: String, demoCatalogDataFrame: DataFrame):
+  (SARModel, Broadcast[Map[Int, String]], Broadcast[Map[Int, String]]) = {
+
+    val session = tlcSampleData.sparkSession
+    val sparkContext = session.sparkContext
+
+    val pipelineModel: PipelineModel = pipeline.fit(ratings)
+    val transformedDf = pipelineModel.transform(ratings)
+
+    val tagIndexModel = new StringIndexer()
+      .setInputCol("tagId_org")
+      .setOutputCol("tagId")
+      .fit(demoCatalogDataFrame)
+
+    val demoCatalogDataFrameIndex = tagIndexModel.transform(pipelineModel.transform(demoCatalogDataFrame))
+
+    val sar = new SAR()
+      .setUserCol(customerIndex.getOutputCol)
+      .setItemCol(itemIndex.getOutputCol)
+      .setTimeCol("timestamp")
+      .setSupportThreshold(threshold)
+      .setSimilarityFunction(similarityFunction)
+      .setStartTime("2015/06/09T19:39:37")
+      .setStartTimeFormat("yyyy/MM/dd'T'h:mm:ss")
+      .setItemFeatures(demoCatalogDataFrameIndex)
+
+    val model = sar.fit(transformedDf)
+
+    val userMap = pipelineModel
+      .stages(0).asInstanceOf[StringIndexerModel]
+      .labels
+      .zipWithIndex
+      .map(t => (t._2, t._1))
+      .toMap
+
+    val itemMap = pipelineModel
+      .stages(1).asInstanceOf[StringIndexerModel]
+      .labels
+      .zipWithIndex
+      .map(t => (t._2, t._1))
+      .toMap
+
+    val userMapBC = sparkContext.broadcast(userMap)
+    val itemMapBC = sparkContext.broadcast(itemMap)
+
+    val recoverUser = udf((userID: Integer) => userMapBC.value.getOrElse[String](userID, "-1"))
+    val recoverItem = udf((itemID: Integer) => itemMapBC.value.getOrElse[String](itemID, "-1"))
+
+    val row = model
+      .getUserDataFrame
+      .select(recoverUser(col("customerID")) as "customerID", col("flatList"))
+      .filter(col("customerID") === "0003000098E85347")
+      .select("flatList")
+      .collect()(0)
+
+    val list = row.getList(0)
+
+    val map = list.toArray.zipWithIndex.map(t => (itemMap.getOrElse(t._2, "-1"), t._1)).toMap
+
+    val userAff = session.read.option("header", "true").csv(user_aff).drop("_c0")
+    val affinityRow = userAff.collect()(0)
+    val columnNames = userAff.schema.fieldNames
+
+    val itemDF = model.getItemDataFrame
+    val simMap = itemDF.collect().map(row => {
+      val itemI = itemMap.getOrElse(row.getInt(0), "-1")
+      val similarityVectorMap = row.getList(1).toArray.zipWithIndex.map(t => (itemMap.getOrElse(t._2, "-1"), t._1))
+        .toMap
+      itemI -> similarityVectorMap
+    }).toMap
+    itemDF.count
+
+    val itemAff = session.read.option("header", "true").csv(simFile)
+    itemAff.count
+    itemAff.collect().foreach(row => {
+      val itemI = row.getString(0)
+      itemAff.drop("_c0").schema.fieldNames.foreach(itemJ => {
+        val groundTrueScore = row.getAs[String](itemJ).toFloat
+        val sparkSarScore = simMap.getOrElse(itemI, Map()).getOrElse(itemJ, "-1")
+        assert(groundTrueScore == sparkSarScore)
+      })
+    })
+    (model, userMapBC, itemMapBC)
   }
 }
