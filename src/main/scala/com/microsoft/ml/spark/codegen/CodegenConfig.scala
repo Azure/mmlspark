@@ -7,12 +7,12 @@ import java.io.File
 
 import com.microsoft.ml.spark.build.BuildInfo
 
-object Config {
-  val DebugMode = sys.env.getOrElse("DEBUGMODE", "").trim.toLowerCase == "true"
+object CodegenConfig {
+  val DebugMode: Boolean = sys.env.getOrElse("DEBUGMODE", "").trim.toLowerCase == "true"
 
-  val TopDir = BuildInfo.baseDirectory
-  val Version = BuildInfo.version
-  val PackageName = BuildInfo.name
+  val TopDir: File = BuildInfo.baseDirectory
+  val Version: String = BuildInfo.version
+  val PackageName: String = BuildInfo.name
   val TargetDir = new File(TopDir, s"target/scala-${BuildInfo.scalaVersion.slice(0,4)}")
   val ScalaSrcDir = "src/main/scala"
 
@@ -42,9 +42,9 @@ object Config {
   //val rPackageFile = new File(rPackageDir, s"mmlspark-$mmlVer.zip")
 
   val InternalPrefix = "_"
-  val ScopeDepth = " " * 4
+  val ScopeDepth: String = " " * 4
 
-  val CopyrightLines =
+  val CopyrightLines: String =
     s"""|# Copyright (C) Microsoft Corporation. All rights reserved.
         |# Licensed under the MIT License. See LICENSE in project root for information.
         |""".stripMargin

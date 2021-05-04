@@ -54,7 +54,7 @@ class VowpalWabbitMurmurWithPrefix(val prefix: String, val maxSize: Int = 2 * 10
             else
               throw new Exception("malformed")
 
-          ys(j) = (0xf0 | ((uc >> 18))).toByte
+          ys(j) = (0xf0 | uc >> 18).toByte
           ys(j + 1) = (0x80 | ((uc >> 12) & 0x3f)).toByte
           ys(j + 2) = (0x80 | ((uc >> 6) & 0x3f)).toByte
           ys(j + 3) = (0x80 | (uc & 0x3f)).toByte

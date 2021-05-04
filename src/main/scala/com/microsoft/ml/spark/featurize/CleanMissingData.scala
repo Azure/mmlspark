@@ -17,7 +17,7 @@ object CleanMissingData extends DefaultParamsReadable[CleanMissingData] {
   val MeanOpt = "Mean"
   val MedianOpt = "Median"
   val CustomOpt = "Custom"
-  val Modes = Array(MeanOpt, MedianOpt, CustomOpt)
+  val Modes: Array[String] = Array(MeanOpt, MedianOpt, CustomOpt)
 
   def validateAndTransformSchema(schema: StructType,
                                  inputCols: Array[String],

@@ -51,7 +51,7 @@ trait LightGBMModelMethods extends LightGBMModelParams with Logging {
     * Public method to get the best iteration from the booster.
     * @return The best iteration, if early stopping was triggered.
     */
-  def getBoosterBestIteration(): Int = {
+  def getBoosterBestIteration: Int = {
     getLightGBMBooster.bestIteration
   }
 
@@ -59,7 +59,7 @@ trait LightGBMModelMethods extends LightGBMModelParams with Logging {
     * Public method to get the total number of iterations trained.
     * @return The total number of iterations trained.
     */
-  def getBoosterNumTotalIterations(): Int = {
+  def getBoosterNumTotalIterations: Int = {
     getLightGBMBooster.numTotalIterations
   }
 
@@ -70,7 +70,7 @@ trait LightGBMModelMethods extends LightGBMModelParams with Logging {
     * each iteration.
     * @return The total number of models.
     */
-  def getBoosterNumTotalModel(): Int = {
+  def getBoosterNumTotalModel: Int = {
     getLightGBMBooster.numTotalModel
   }
 
@@ -78,7 +78,7 @@ trait LightGBMModelMethods extends LightGBMModelParams with Logging {
     * Public method to get the number of features from the booster.
     * @return The number of features.
     */
-  def getBoosterNumFeatures(): Int = {
+  def getBoosterNumFeatures: Int = {
     getLightGBMBooster.numFeatures
   }
 
@@ -86,7 +86,7 @@ trait LightGBMModelMethods extends LightGBMModelParams with Logging {
     * Public method to get the number of classes from the booster.
     * @return The number of classes.
     */
-  def getBoosterNumClasses(): Int = {
+  def getBoosterNumClasses: Int = {
     getLightGBMBooster.numClasses
   }
 

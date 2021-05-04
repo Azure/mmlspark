@@ -21,7 +21,7 @@ class SparkBindingsTest2 extends TestBase {
   import spark.implicits._
 
   test("Test to make sure there are no strange memory leaks") {
-    (1 to 40).foreach { i =>
+    (1 to 40).foreach { _ =>
       val foos = (0 to 40).map(i => Tuple1(Foo(i, i.toString, Seq(Bar(i, "foo".getBytes)))))
       val converter = Foo.makeFromRowConverter
       val df = foos.toDF("foos")

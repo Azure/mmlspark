@@ -7,7 +7,7 @@ import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
-import com.microsoft.ml.spark.codegen.Config
+import com.microsoft.ml.spark.codegen.CodegenConfig
 import com.microsoft.ml.spark.core.env.FileUtilities
 import com.microsoft.ml.spark.core.test.base.TestBase
 import org.apache.commons.io.FileUtils
@@ -51,7 +51,7 @@ trait PyTestFuzzing[S <: PipelineStage] extends TestBase with DataFrameEquality 
   val testClassName: String = this.getClass.getName.split(".".toCharArray).last
 
   val testDataDir: File = FileUtilities.join(
-    Config.TestDataDir, this.getClass.getName.split(".".toCharArray).last)
+    CodegenConfig.TestDataDir, this.getClass.getName.split(".".toCharArray).last)
 
   def saveDataset(df: DataFrame, name: String): Unit = {
     df.write.mode("overwrite").parquet(new File(testDataDir, s"$name.parquet").toString)
@@ -180,7 +180,7 @@ trait PyTestFuzzing[S <: PipelineStage] extends TestBase with DataFrameEquality 
 
     val testFolders = importPath.mkString(".")
       .replaceAllLiterally("com.microsoft.ml.spark", "mmlsparktest").split(".".toCharArray)
-    val testDir = FileUtilities.join((Seq(Config.PyTestDir.toString) ++ testFolders.toSeq): _*)
+    val testDir = FileUtilities.join((Seq(CodegenConfig.PyTestDir.toString) ++ testFolders.toSeq): _*)
     testDir.mkdirs()
     Files.write(
       FileUtilities.join(testDir, "test_" + camelToSnake(testClassName) + ".py").toPath,

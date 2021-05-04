@@ -48,7 +48,7 @@ class TextLIMESuite extends TransformerFuzzing[TextLIME] {
 
   lazy val fitModel: PipelineModel = textClassifier.fit(df)
 
-  lazy val textLime = new TextLIME()
+  lazy val textLime: TextLIME = new TextLIME()
     .setModel(fitModel)
     .setInputCol("text")
     .setPredictionCol("prob")

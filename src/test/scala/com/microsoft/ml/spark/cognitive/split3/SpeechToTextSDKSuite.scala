@@ -21,7 +21,7 @@ import org.scalactic.Equality
 import org.scalatest.Assertion
 
 trait CustomSpeechKey {
-  lazy val customSpeechKey = sys.env.getOrElse("CUSTOM_SPEECH_API_KEY", Secrets.CustomSpeechApiKey)
+  lazy val customSpeechKey: String = sys.env.getOrElse("CUSTOM_SPEECH_API_KEY", Secrets.CustomSpeechApiKey)
 }
 
 trait SpeechToTextSDKSuiteBase extends TestBase with CognitiveKey with CustomSpeechKey {
@@ -35,12 +35,12 @@ trait SpeechToTextSDKSuiteBase extends TestBase with CognitiveKey with CustomSpe
   val profanity = "masked"
   val format = "simple"
 
-  val streamUrl = "https://bitdash-a.akamaihd.net/content/MI201109210084_1/" +
+  val streamUrl: String = "https://bitdash-a.akamaihd.net/content/MI201109210084_1/" +
     "m3u8s/f08e80da-bf1d-4e3d-8899-f0f6155f6efa.m3u8"
 
   val jaccardThreshold = 0.9
 
-  lazy val audioPaths = Seq("audio1.wav", "audio2.wav", "audio3.mp3",
+  lazy val audioPaths: Seq[File] = Seq("audio1.wav", "audio2.wav", "audio3.mp3",
     "dialogue.mp3", "mark.wav", "lily.wav")
     .map(new File(resourcesDir, _))
 
@@ -50,7 +50,7 @@ trait SpeechToTextSDKSuiteBase extends TestBase with CognitiveKey with CustomSpe
 
   lazy val Seq(bytes1, bytes2, bytes3, dialogueBytes, speaker1Bytes, speaker2Bytes) = audioBytes
 
-  lazy val textPaths = Seq("audio1.txt", "audio2.txt", "audio3.txt", "audio4.txt")
+  lazy val textPaths: Seq[File] = Seq("audio1.txt", "audio2.txt", "audio3.txt", "audio4.txt")
     .map(new File(resourcesDir, _))
 
   lazy val Seq(text1, text2, text3, text4) = textPaths.map(f =>
@@ -154,7 +154,7 @@ class SpeechToTextSDKSuite extends TransformerFuzzing[SpeechToTextSDK] with Spee
     .setSubscriptionKey(customSpeechKey)
     .setEndpointId("395cdcf7-e7db-4083-aebe-868a7d80ca74")
 
-  override lazy val dfEq = new Equality[DataFrame] {
+  override lazy val dfEq: Equality[DataFrame] = new Equality[DataFrame] {
     override def areEqual(a: DataFrame, b: Any): Boolean = {
       jaccardSimilarity(
         speechArrayToText(extractResults(a, true)),
@@ -324,7 +324,7 @@ class ConversationTranscriptionSuite extends TransformerFuzzing[ConversationTran
     .setLanguage("en-US")
     .setProfanity("Masked")
 
-  override lazy val dfEq = new Equality[DataFrame] {
+  override lazy val dfEq: Equality[DataFrame] = new Equality[DataFrame] {
     override def areEqual(a: DataFrame, b: Any): Boolean = {
       jaccardSimilarity(
         speechArrayToText(extractResults(a, true)),

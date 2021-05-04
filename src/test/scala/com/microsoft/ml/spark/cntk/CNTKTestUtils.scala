@@ -12,18 +12,19 @@ import com.microsoft.ml.spark.image.UnrollImage
 import org.apache.spark.ml.linalg.DenseVector
 import org.apache.spark.sql._
 import com.microsoft.ml.spark.io.IOImplicits._
+import org.scalatest.Assertion
 
 trait CNTKTestUtils extends TestBase {
 
-  val filesRoot = BuildInfo.datasetDir.toString
-  val imagePath = FileUtilities.join(filesRoot, "Images", "CIFAR").toString
-  val modelPath = FileUtilities.join(filesRoot, "CNTKModel", "ConvNet_CIFAR10.model").toString
+  val filesRoot: String = BuildInfo.datasetDir.toString
+  val imagePath: String = FileUtilities.join(filesRoot, "Images", "CIFAR").toString
+  val modelPath: String = FileUtilities.join(filesRoot, "CNTKModel", "ConvNet_CIFAR10.model").toString
   val inputCol  = "cntk_images"
   val outputCol = "out"
   val labelCol  = "labels"
 
-  val featureVectorLength = 3 * 32 * 32
-  lazy val saveFile = new File(tmpDir.toFile, "spark-z.model").toString
+  val featureVectorLength: Int = 3 * 32 * 32
+  lazy val saveFile: String = new File(tmpDir.toFile, "spark-z.model").toString
 
   def testModelDF(spark: SparkSession): DataFrame = {
     import spark.implicits._
@@ -65,7 +66,7 @@ trait CNTKTestUtils extends TestBase {
     }
   }
 
-  protected def compareToTestModel(result: DataFrame) = {
+  protected def compareToTestModel(result: DataFrame): Assertion = {
     //TODO improve checks
     assert(result.columns.toSet == Set(inputCol, outputCol))
     assert(result.count() == testModelDF(result.sparkSession).count())

@@ -21,9 +21,9 @@ object SparkSessionFactory {
   private val TestDir = System.currentTimeMillis.toString
 
   private lazy val LocalWarehousePath =
-    "file:" + customNormalize(new File(currentDir, DefaultWarehouseDirName).getAbsolutePath())
-  val WorkingDir =
-    "file:" + customNormalize(new File(currentDir, TestDir).getAbsolutePath())
+    "file:" + customNormalize(new File(currentDir(), DefaultWarehouseDirName).getAbsolutePath)
+  val WorkingDir: String =
+    "file:" + customNormalize(new File(currentDir(), TestDir).getAbsolutePath)
 
   // On NTFS-like systems, normalize path
   //   (solves the problem of sending a path from spark to hdfs on Windows)

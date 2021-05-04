@@ -15,9 +15,9 @@ class VerifyFastVectorAssembler extends TestBase {
 
   val invalidExceptionError = "Could not catch correct exception"
 
-  val inputCols = Array("a", "b", "c", "d", "e")
+  val inputCols: Array[String] = Array("a", "b", "c", "d", "e")
   val outputCol = "testCol"
-  lazy val mockDataset = spark.createDataFrame(Seq(
+  lazy val mockDataset: DataFrame = spark.createDataFrame(Seq(
     (0, 2, 0.5, 0.6, 0),
     (1, 3, 0.4, 0.5, 1),
     (2, 4, 0.78, 0.99, 2),
@@ -39,7 +39,7 @@ class VerifyFastVectorAssembler extends TestBase {
     val outputCol = "testCol"
 
     val fastAssembler = new FastVectorAssembler()
-      .setInputCols((inputCols.toList.drop(1) ::: (List(catColumn))).toArray)
+      .setInputCols((inputCols.toList.drop(1) ::: List(catColumn)).toArray)
       .setOutputCol(outputCol)
 
     var caughtException: Boolean = false

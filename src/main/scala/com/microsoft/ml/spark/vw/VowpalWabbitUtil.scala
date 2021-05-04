@@ -56,7 +56,7 @@ object VowpalWabbitUtil {
                                  sharedNamespaceInfos: Array[NamespaceInfo],
                                  vw: VowpalWabbitNative,
                                  exampleStack: ExampleStack,
-                                 fun: (Array[VowpalWabbitExample]) => T): T = {
+                                 fun: Array[VowpalWabbitExample] => T): T = {
     // first example is the shared feature example
     val sharedExample = createSharedExample(row, sharedNamespaceInfos, exampleStack)
 

@@ -12,7 +12,7 @@ import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.functions.{col, collect_list, lit, struct}
 
 trait AnomalyKey {
-  lazy val anomalyKey = sys.env.getOrElse("ANOMALY_API_KEY", Secrets.AnomalyApiKey)
+  lazy val anomalyKey: String = sys.env.getOrElse("ANOMALY_API_KEY", Secrets.AnomalyApiKey)
 }
 
 trait AnomalyDetectorSuiteBase extends TestBase with AnomalyKey {
@@ -67,7 +67,7 @@ trait AnomalyDetectorSuiteBase extends TestBase with AnomalyKey {
 
 class DetectLastAnomalySuite extends TransformerFuzzing[DetectLastAnomaly] with AnomalyDetectorSuiteBase  {
 
-  lazy val ad = new DetectLastAnomaly()
+  lazy val ad: DetectLastAnomaly = new DetectLastAnomaly()
     .setSubscriptionKey(anomalyKey)
     .setLocation("westus2")
     .setOutputCol("anomalies")
@@ -101,7 +101,7 @@ class DetectLastAnomalySuite extends TransformerFuzzing[DetectLastAnomaly] with 
 
 class DetectAnomaliesSuite extends TransformerFuzzing[DetectAnomalies] with AnomalyDetectorSuiteBase  {
 
-  lazy val ad = new DetectAnomalies()
+  lazy val ad: DetectAnomalies = new DetectAnomalies()
     .setSubscriptionKey(anomalyKey)
     .setLocation("westus2")
     .setOutputCol("anomalies")
@@ -158,7 +158,7 @@ class SimpleDetectAnomaliesSuite extends TransformerFuzzing[SimpleDetectAnomalie
     .++(baseSeq.reverse.take(2).map(p => (p._1,p._2,2.0)))
     .toDF("timestamp","value","group")
 
-  lazy val sad = new SimpleDetectAnomalies()
+  lazy val sad: SimpleDetectAnomalies = new SimpleDetectAnomalies()
     .setSubscriptionKey(anomalyKey)
     .setLocation("westus2")
     .setOutputCol("anomalies")

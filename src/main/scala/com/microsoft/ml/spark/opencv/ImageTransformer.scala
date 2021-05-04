@@ -120,8 +120,8 @@ object ColorFormat {
   * @param params
   */
 class Flip(params: Map[String, Any]) extends ImageTransformerStage(params) {
-  val flipCode = params(Flip.flipCode).asInstanceOf[Int]
-  override val stageName = Flip.stageName
+  val flipCode: Int = params(Flip.flipCode).asInstanceOf[Int]
+  override val stageName: String = Flip.stageName
 
   override def apply(image: Mat): Mat = {
     val dst = new Mat()
@@ -293,7 +293,7 @@ class ImageTransformer(val uid: String) extends Transformer
 
   def setStages(value: Array[Map[String, Any]]): this.type = set(stages, value)
 
-  val emptyStages = Array[Map[String, Any]]()
+  val emptyStages: Array[Map[String, Any]] = Array[Map[String, Any]]()
 
   def getStages: Array[Map[String, Any]] = if (isDefined(stages)) $(stages) else emptyStages
 

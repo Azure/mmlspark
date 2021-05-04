@@ -6,12 +6,13 @@ package com.microsoft.ml.spark.featurize.text
 import com.microsoft.ml.spark.core.test.fuzzing.{TestObject, TransformerFuzzing}
 import org.apache.spark.ml.feature.Tokenizer
 import org.apache.spark.ml.util.MLReadable
+import org.apache.spark.sql.DataFrame
 
 import scala.collection.mutable
 
 class MultiNGramSpec extends TransformerFuzzing[MultiNGram] {
 
-  lazy val dfRaw = spark
+  lazy val dfRaw: DataFrame = spark
     .createDataFrame(Seq(
       (0, "Hi I"),
       (1, "I wish for snow today"),
@@ -20,14 +21,14 @@ class MultiNGramSpec extends TransformerFuzzing[MultiNGram] {
       (4, (1 to 10).map(_.toString).mkString(" "))
     ))
     .toDF("label", "sentence")
-  lazy val dfTok = new Tokenizer()
+  lazy val dfTok: DataFrame = new Tokenizer()
     .setInputCol("sentence")
     .setOutputCol("tokens")
     .transform(dfRaw)
 
-  lazy val t = new MultiNGram()
+  lazy val t: MultiNGram = new MultiNGram()
     .setLengths(Array(1, 3, 4)).setInputCol("tokens").setOutputCol("ngrams")
-  lazy val dfNgram = t.transform(dfTok)
+  lazy val dfNgram: DataFrame = t.transform(dfTok)
 
   test("operate on tokens ") {
     val grams = dfNgram.collect().last.getAs[Seq[String]]("ngrams").toSet

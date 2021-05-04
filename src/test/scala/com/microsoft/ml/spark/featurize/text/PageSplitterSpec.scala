@@ -5,12 +5,13 @@ package com.microsoft.ml.spark.featurize.text
 
 import com.microsoft.ml.spark.core.test.fuzzing.{TestObject, TransformerFuzzing}
 import org.apache.spark.ml.util.MLReadable
+import org.apache.spark.sql.DataFrame
 
 class PageSplitterSpec extends TransformerFuzzing[PageSplitter] {
 
   import spark.implicits._
 
-  lazy val df = Seq(
+  lazy val df: DataFrame = Seq(
     "words words  words     wornssaa ehewjkdiw weijnsikjn xnh",
     "s s  s   s     s           s",
     "hsjbhjhnskjhndwjnbvckjbnwkjwenbvfkjhbnwevkjhbnwejhkbnvjkhnbndjkbnd",
@@ -20,7 +21,7 @@ class PageSplitterSpec extends TransformerFuzzing[PageSplitter] {
     null //scalastyle:ignore null
   ).toDF("text")
 
-  lazy val t = new PageSplitter()
+  lazy val t: PageSplitter = new PageSplitter()
     .setInputCol("text")
     .setMaximumPageLength(20)
     .setMinimumPageLength(10)

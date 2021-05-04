@@ -35,8 +35,8 @@ class ExampleStack(val vw: VowpalWabbitNative) {
     else
       stack.pop
 
-    ex.clear
-    ex.setDefaultLabel
+    ex.clear()
+    ex.setDefaultLabel()
 
     ex
   }
@@ -141,7 +141,7 @@ class VowpalWabbitContextualBandit(override val uid: String)
   def setParallelismForParamListFit(value: Int): this.type = set(parallelism, value)
 
   // Used in the base class to remove unneeded columns from the dataframe.
-  protected override def getAdditionalColumns(): Seq[String] =
+  protected override def getAdditionalColumns: Seq[String] =
     Seq(getChosenActionCol, getProbabilityCol, getSharedCol) ++ getAdditionalSharedFeatures
 
   protected override def addExtraArgs(args: StringBuilder): Unit = {
@@ -252,7 +252,7 @@ class VowpalWabbitContextualBandit(override val uid: String)
           val prediction: ActionProbs = examples(0).getPrediction.asInstanceOf[ActionProbs]
           val probs = prediction.getActionProbs
           val selectedActionIdxZeroBased = selectedActionIdx - 1
-          probs.find(item => item.getAction() == selectedActionIdxZeroBased) match {
+          probs.find(item => item.getAction == selectedActionIdxZeroBased) match {
             case Some(evalProb) =>
               ctx.contextualBanditMetrics.addExample(loggedProbability, cost,evalProb.getProbability())
             case None => log.warn(s"No action found for index: ${selectedActionIdxZeroBased} " +

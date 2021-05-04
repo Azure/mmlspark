@@ -1,17 +1,15 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See LICENSE in project root for information.
 
-package com.microsoft.ml.spark
+package com.microsoft.ml.spark.io.binary
 
 import com.microsoft.ml.spark.core.env.StreamUtilities
 import com.microsoft.ml.spark.core.schema.BinaryFileSchema
 import com.microsoft.ml.spark.core.utils.AsyncUtils
 import org.apache.commons.io.IOUtils
 import org.apache.hadoop.fs.{FileStatus, FileSystem, Path}
-import org.apache.spark.binary.BinaryFileFormat
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.{DataFrame, Row, SparkSession}
-import org.apache.spark.binary.ConfUtils
 import org.apache.spark.sql.types.BinaryType
 
 import scala.concurrent.{ExecutionContext, Future}

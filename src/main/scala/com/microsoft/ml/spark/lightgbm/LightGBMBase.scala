@@ -134,7 +134,7 @@ trait LightGBMBase[TrainedModel <: Model[TrainedModel]] extends Estimator[Traine
     }
   }
 
-  protected def getTrainingCols(): Array[(String, Seq[DataType])] = {
+  protected def getTrainingCols: Array[(String, Seq[DataType])] = {
     val colsToCheck: Array[(Option[String], Seq[DataType])] = Array(
       (Some(getLabelCol), Seq(DoubleType)),
       (Some(getFeaturesCol), Seq(VectorType)),
@@ -198,7 +198,7 @@ trait LightGBMBase[TrainedModel <: Model[TrainedModel]] extends Estimator[Traine
         min(numExecutorTasks, dataset.rdd.getNumPartitions)
       }
     // Only get the relevant columns
-    val trainingCols = getTrainingCols()
+    val trainingCols = getTrainingCols
 
     val df = prepareDataframe(dataset, trainingCols, numTasks)
 

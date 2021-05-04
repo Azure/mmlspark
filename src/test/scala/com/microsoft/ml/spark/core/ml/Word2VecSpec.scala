@@ -59,13 +59,13 @@ class Word2VecSpec extends TestBase {
     def base(): Word2Vec = genW2V().setInputCol("words")
     def assertIllegalArgument[T](f: T => Any, args: T*): Unit =
       args.foreach { n => interceptWithoutLogging[IllegalArgumentException] { f(n) } }
-    assertIllegalArgument[Int](base.setMinCount,             -1, -10)
-    assertIllegalArgument[Int](base.setMaxIter,              -1, -10)
-    assertIllegalArgument[Int](base.setVectorSize,        0, -1, -10)
-    assertIllegalArgument[Int](base.setWindowSize,        0, -1, -10)
-    assertIllegalArgument[Int](base.setMaxSentenceLength, 0, -1, -10)
-    assertIllegalArgument[Int](base.setNumPartitions,     0, -1, -10)
-    assertIllegalArgument[Double](base.setStepSize, 0.0, -1.0, -10.0)
+    assertIllegalArgument[Int](base().setMinCount,             -1, -10)
+    assertIllegalArgument[Int](base().setMaxIter,              -1, -10)
+    assertIllegalArgument[Int](base().setVectorSize,        0, -1, -10)
+    assertIllegalArgument[Int](base().setWindowSize,        0, -1, -10)
+    assertIllegalArgument[Int](base().setMaxSentenceLength, 0, -1, -10)
+    assertIllegalArgument[Int](base().setNumPartitions,     0, -1, -10)
+    assertIllegalArgument[Double](base().setStepSize, 0.0, -1.0, -10.0)
   }
 
   test("return a vector of zeros when it encounters an OOV word") {

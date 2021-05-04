@@ -5,14 +5,12 @@ package com.microsoft.ml.spark.vw
 
 import com.microsoft.ml.spark.core.env.StreamUtilities
 import com.microsoft.ml.spark.downloader.FaultToleranceUtils
-import org.apache.spark.binary.BinaryFileFormat
-import org.apache.spark.ml.ComplexParamsWritable
-import org.apache.spark.ml.linalg.{DenseVector, SparseVector}
+import com.microsoft.ml.spark.io.binary.BinaryFileFormat
 import org.apache.spark.ml.param.{ByteArrayParam, DataFrameParam, Param}
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 import org.apache.spark.sql.functions.{col, struct, udf}
 import org.apache.spark.sql.types.StructType
-import org.vowpalwabbit.spark.{VowpalWabbitArguments, VowpalWabbitExample, VowpalWabbitMurmur, VowpalWabbitNative}
+import org.vowpalwabbit.spark.{VowpalWabbitArguments, VowpalWabbitExample, VowpalWabbitNative}
 import org.vowpalwabbit.spark.prediction.ScalarPrediction
 
 import scala.io.Source

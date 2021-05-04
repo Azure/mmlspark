@@ -81,9 +81,9 @@ object FaceUtils extends CognitiveKey {
 import com.microsoft.ml.spark.cognitive.split1.FaceUtils._
 
 object FaceListProtocol {
-  implicit val PfiEnc = jsonFormat2(PersistedFaceInfo.apply)
-  implicit val FlcEnc = jsonFormat4(FaceListContents.apply)
-  implicit val FliEnc = jsonFormat3(FaceListInfo.apply)
+  implicit val PfiEnc: RootJsonFormat[PersistedFaceInfo] = jsonFormat2(PersistedFaceInfo.apply)
+  implicit val FlcEnc: RootJsonFormat[FaceListContents] = jsonFormat4(FaceListContents.apply)
+  implicit val FliEnc: RootJsonFormat[FaceListInfo] = jsonFormat3(FaceListInfo.apply)
 }
 
 object FaceList {
@@ -135,8 +135,8 @@ object FaceList {
 }
 
 object PersonGroupProtocol {
-  implicit val PgiEnc = jsonFormat3(PersonGroupInfo.apply)
-  implicit val PgtsEnc = jsonFormat4(PersonGroupTrainingStatus.apply)
+  implicit val PgiEnc: RootJsonFormat[PersonGroupInfo] = jsonFormat3(PersonGroupInfo.apply)
+  implicit val PgtsEnc: RootJsonFormat[PersonGroupTrainingStatus] = jsonFormat4(PersonGroupTrainingStatus.apply)
 }
 
 object PersonGroup {
@@ -180,7 +180,7 @@ object PersonGroup {
 }
 
 object PersonProtocol {
-  implicit val PiEnc = jsonFormat4(PersonInfo.apply)
+  implicit val PiEnc: RootJsonFormat[PersonInfo] = jsonFormat4(PersonInfo.apply)
 }
 
 object Person {

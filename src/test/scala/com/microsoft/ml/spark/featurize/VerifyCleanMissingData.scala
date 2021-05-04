@@ -158,7 +158,7 @@ class VerifyCleanMissingData extends TestBase with EstimatorFuzzing[CleanMissing
     verifyReplacementValues[Boolean](dataset, result, replacesValues, Array(1))
   }
 
-  private def verifyReplacementValues(expected: DataFrame, result: DataFrame, expectedValues: Array[Double]) = {
+  private def verifyReplacementValues(expected: DataFrame, result: DataFrame, expectedValues: Array[Double]): Unit = {
     val collectedExp = expected.collect()
     val collectedResult = result.collect()
     val numRows = result.count().toInt
@@ -184,7 +184,7 @@ class VerifyCleanMissingData extends TestBase with EstimatorFuzzing[CleanMissing
   private def verifyReplacementValues[T](expected: DataFrame,
                                          result: DataFrame,
                                          expectedValues: Array[T],
-                                         columns: Array[Int]) = {
+                                         columns: Array[Int]): Unit = {
     val collectedExp = expected.collect()
     val collectedResult = result.collect()
     val numRows = result.count().toInt

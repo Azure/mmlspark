@@ -14,7 +14,7 @@ import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, Row}
 
 trait TextKey {
-  lazy val textKey = sys.env.getOrElse("TEXT_API_KEY", Secrets.CognitiveApiKey)
+  lazy val textKey: String = sys.env.getOrElse("TEXT_API_KEY", Secrets.CognitiveApiKey)
 }
 
 class LanguageDetectorSuite extends TransformerFuzzing[LanguageDetectorV2] with TextKey {

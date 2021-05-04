@@ -3,8 +3,8 @@
 
 package com.microsoft.ml.spark.io
 
+import com.microsoft.ml.spark.io.binary.BinaryFileFormat
 import com.microsoft.ml.spark.io.http.{HTTPRequestData, HTTPSchema}
-import org.apache.spark.binary.BinaryFileFormat
 import org.apache.spark.injections.UDFUtils
 import org.apache.spark.ml.image.ImageSchema
 import org.apache.spark.ml.source.image.PatchedImageFileFormat

@@ -5,12 +5,13 @@ package com.microsoft.ml.spark.stages
 
 import com.microsoft.ml.spark.core.test.fuzzing.{TestObject, TransformerFuzzing}
 import org.apache.spark.ml.util.MLReadable
+import org.apache.spark.sql.DataFrame
 
 class CacherSuite extends TransformerFuzzing[Cacher] {
 
   import spark.implicits._
 
-  lazy val df = Seq((0, "guitars", "drums"),
+  lazy val df: DataFrame = Seq((0, "guitars", "drums"),
                (1, "piano", "trumpet"),
                (2, "bass", "cymbals"),
                (3, "guitars", "drums"),

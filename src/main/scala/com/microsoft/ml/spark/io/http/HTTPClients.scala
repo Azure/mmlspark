@@ -39,7 +39,7 @@ private[ml] trait HTTPClient extends BaseClient
     .setSocketTimeout(requestTimeout)
     .build()
 
-  protected val connectionManager = {
+  protected val connectionManager: PoolingHttpClientConnectionManager = {
     val cm = new PoolingHttpClientConnectionManager()
     cm.setDefaultMaxPerRoute(Int.MaxValue) // Spark will handle the threading to avoid going over limits
     cm.setMaxTotal(Int.MaxValue)

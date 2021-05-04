@@ -122,7 +122,7 @@ protected class BoosterHandler(model: String) {
   lazy val rawScoreConstant: Int = lightgbmlibConstants.C_API_PREDICT_RAW_SCORE
   lazy val normalScoreConstant: Int = lightgbmlibConstants.C_API_PREDICT_NORMAL
   lazy val leafIndexPredictConstant: Int = lightgbmlibConstants.C_API_PREDICT_LEAF_INDEX
-  lazy val contribPredictConstant = lightgbmlibConstants.C_API_PREDICT_CONTRIB
+  lazy val contribPredictConstant: Int = lightgbmlibConstants.C_API_PREDICT_CONTRIB
 
   lazy val dataInt32bitType: Int = lightgbmlibConstants.C_API_DTYPE_INT32
   lazy val data64bitType: Int = lightgbmlibConstants.C_API_DTYPE_FLOAT64

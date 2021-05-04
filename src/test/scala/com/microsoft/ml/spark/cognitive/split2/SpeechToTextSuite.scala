@@ -19,13 +19,13 @@ class SpeechToTextSuite extends TransformerFuzzing[SpeechToText]
   import spark.implicits._
 
   val region = "eastus"
-  val resourcesDir = System.getProperty("user.dir") + "/src/test/resources/"
+  val resourcesDir: String = System.getProperty("user.dir") + "/src/test/resources/"
   val uri = new URI(s"https://$region.api.cognitive.microsoft.com/sts/v1.0/issuetoken")
   val language = "en-us"
   val profanity = "masked"
   val format = "simple"
 
-  lazy val stt = new SpeechToText()
+  lazy val stt: SpeechToText = new SpeechToText()
     .setSubscriptionKey(cognitiveKey)
     .setLocation(region)
     .setOutputCol("text")
@@ -40,7 +40,7 @@ class SpeechToTextSuite extends TransformerFuzzing[SpeechToText]
     Tuple1(audioBytes)
   ).toDF("audio")
 
-  override lazy val dfEq = new Equality[DataFrame] {
+  override lazy val dfEq: Equality[DataFrame] = new Equality[DataFrame] {
     override def areEqual(a: DataFrame, b: Any): Boolean =
       baseDfEq.areEqual(a.drop("audio"), b.asInstanceOf[DataFrame].drop("audio"))
   }

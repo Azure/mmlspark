@@ -9,21 +9,22 @@ import com.microsoft.ml.spark.core.test.fuzzing.{EstimatorFuzzing, TestObject}
 import org.apache.spark.ml.PipelineModel
 import org.apache.spark.ml.feature.{StringIndexer, Tokenizer}
 import org.apache.spark.ml.util.MLReadable
+import org.apache.spark.sql.DataFrame
 
 import scala.collection.mutable
 
 class MultiColumnAdapterSpec extends TestBase with EstimatorFuzzing[MultiColumnAdapter] {
 
-  lazy val wordDF = spark.createDataFrame(Seq(
+  lazy val wordDF: DataFrame = spark.createDataFrame(Seq(
     (0, "This is a test", "this is one too"),
     (1, "could be a test", "bar"),
     (2, "foo", "bar"),
     (3, "foo", "maybe not")))
     .toDF("label", "words1", "words2")
-  lazy val inputCols  = Array[String]("words1",  "words2")
-  lazy val outputCols = Array[String]("output1", "output2")
+  lazy val inputCols: Array[String] = Array[String]("words1",  "words2")
+  lazy val outputCols: Array[String] = Array[String]("output1", "output2")
   lazy val stage = new StringIndexer()
-  lazy val adaptedEstimator =
+  lazy val adaptedEstimator: MultiColumnAdapter =
     new MultiColumnAdapter().setBaseStage(stage)
           .setInputCols(inputCols).setOutputCols(outputCols)
 

@@ -186,7 +186,7 @@ class VowpalWabbitFeaturizer(override val uid: String) extends Transformer
 
         val indicesArray = indices.result
         if (getPreserveOrderNumBits > 0) {
-          var idxPrefixBits = 30 - getPreserveOrderNumBits
+          val idxPrefixBits = 30 - getPreserveOrderNumBits
 
           if (indicesArray.length > maxFeaturesForOrdering)
             throw new IllegalArgumentException(

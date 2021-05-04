@@ -79,7 +79,7 @@ class PatchedImageFileFormat extends ImageFileFormat with Serializable with Logg
                                      requiredSchema: StructType,
                                      filters: Seq[Filter],
                                      options: Map[String, String],
-                                     hadoopConf: Configuration): (PartitionedFile) => Iterator[InternalRow] = {
+                                     hadoopConf: Configuration): PartitionedFile => Iterator[InternalRow] = {
     assert(
       requiredSchema.length <= 1,
       "Image data source only produces a single data column named \"image\".")

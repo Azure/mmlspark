@@ -7,7 +7,7 @@ import com.microsoft.ml.spark.core.test.base.TestBase
 import com.microsoft.ml.spark.core.test.fuzzing.{TestObject, TransformerFuzzing}
 import org.apache.spark.TaskContext
 import org.apache.spark.ml.util.MLReadable
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
 import org.apache.spark.sql.types.{IntegerType, StringType, StructType}
 
@@ -19,7 +19,7 @@ class StratifiedRepartitionSuite extends TestBase with TransformerFuzzing[Strati
   val colors = "colors"
   val const = "const"
 
-  lazy val input = Seq(
+  lazy val input: DataFrame = Seq(
     (0, "Blue", 2),
     (0, "Red", 2),
     (0, "Green", 2),
@@ -54,7 +54,7 @@ class StratifiedRepartitionSuite extends TestBase with TransformerFuzzing[Strati
         } else {
           // Add back at least 3 instances on other partitions
           val oneOfEachExample = List(Row(0, "Blue", 2), Row(1, "Purple", 2), Row(2, "Black", 2), Row(3, "Gray", 2))
-          (iter.toList.union(oneOfEachExample).union(oneOfEachExample).union(oneOfEachExample)).toIterator
+          iter.toList.union(oneOfEachExample).union(oneOfEachExample).union(oneOfEachExample).toIterator
         }
       })(inputEnc).cache()
     // Some debug to understand what data is on which partition

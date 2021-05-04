@@ -8,21 +8,22 @@ import com.microsoft.ml.spark.core.test.fuzzing.{EstimatorFuzzing, TestObject}
 import org.apache.spark.ml.PipelineModel
 import org.apache.spark.ml.feature.{NGram, Tokenizer}
 import org.apache.spark.ml.util.MLReadable
+import org.apache.spark.sql.DataFrame
 
 class TextFeaturizerSpec extends EstimatorFuzzing[TextFeaturizer]{
   override val testFitting = true
 
-  lazy val dfRaw = spark
+  lazy val dfRaw: DataFrame = spark
     .createDataFrame(Seq((0, "Hi I"),
                          (1, "I wish for snow today"),
                          (2, "we Cant go to the park, because of the snow!"),
                          (3, "")))
     .toDF("label", "sentence")
-  lazy val dfTok = new Tokenizer()
+  lazy val dfTok: DataFrame = new Tokenizer()
     .setInputCol("sentence")
     .setOutputCol("tokens")
     .transform(dfRaw)
-  lazy val dfNgram =
+  lazy val dfNgram: DataFrame =
     new NGram().setInputCol("tokens").setOutputCol("ngrams").transform(dfTok)
 
   test("operate on sentences,tokens,or ngrams") {

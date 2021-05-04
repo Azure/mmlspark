@@ -17,7 +17,7 @@ abstract class RangeHyperParam[T](val min: T, val max: T, val seed: Long) extend
 class IntRangeHyperParam(min: Int, max: Int, seed: Long = 0)
     extends RangeHyperParam[Int](min, max, seed) {
 
-  def getNext(): Int = {
+  def getNext: Int = {
     val range = max - min
     random.nextInt(range) + min
   }
@@ -27,7 +27,7 @@ class IntRangeHyperParam(min: Int, max: Int, seed: Long = 0)
 class LongRangeHyperParam(min: Long, max: Long, seed: Long = 0)
     extends RangeHyperParam[Long](min, max, seed) {
 
-  def getNext(): Long = {
+  def getNext: Long = {
     val range = max - min
     (random.nextLong() * range) + min
   }
@@ -38,8 +38,8 @@ class FloatRangeHyperParam(min: Float, max: Float, seed: Long = 0)
     extends RangeHyperParam[Float](min, max, seed) {
 
   val doubleRange = new DoubleRangeHyperParam(min.toDouble, max.toDouble)
-  def getNext(): Float = {
-    doubleRange.getNext().toFloat
+  def getNext: Float = {
+    doubleRange.getNext.toFloat
   }
 
 }
@@ -47,7 +47,7 @@ class FloatRangeHyperParam(min: Float, max: Float, seed: Long = 0)
 class DoubleRangeHyperParam(min: Double, max: Double, seed: Long = 0)
     extends RangeHyperParam[Double](min, max, seed) {
 
-  def getNext(): Double = {
+  def getNext: Double = {
     val range = max - min
     (random.nextDouble() * range) + min
   }
@@ -86,7 +86,7 @@ class DiscreteHyperParam[T](values: List[T], seed: Long = 0) extends Dist[T] {
 
   val random = new Random(seed)
 
-  def getNext(): T = {
+  def getNext: T = {
     values(random.nextInt(values.length))
   }
 

@@ -66,7 +66,7 @@ class VerifyFeaturize extends TestBase with EstimatorFuzzing[Featurize] {
 
   // int label with features of:
   // long, double, boolean, int, byte, float
-  lazy val mockDataset = spark.createDataFrame(Seq(
+  lazy val mockDataset: DataFrame = spark.createDataFrame(Seq(
     (0, 2L, 0.50, true, 0, 0.toByte, 12F),
     (1, 3L, 0.40, false, 1, 100.toByte, 30F),
     (0, 4L, 0.78, true, 2, 50.toByte, 12F),

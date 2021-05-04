@@ -10,7 +10,7 @@ class StopWatch {
   def restart(): Unit = {
     elapsedTime = 0
 
-    start
+    start()
   }
 
   def start(): Unit = {
@@ -22,11 +22,11 @@ class StopWatch {
   }
 
   def measure[T](f: => T): T  = {
-    start
+    start()
 
     val ret = f
 
-    pause
+    pause()
 
     ret
   }

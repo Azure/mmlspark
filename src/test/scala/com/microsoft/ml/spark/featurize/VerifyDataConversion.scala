@@ -8,19 +8,20 @@ import java.sql.Timestamp
 import com.microsoft.ml.spark.core.schema.SparkSchema
 import com.microsoft.ml.spark.core.test.base.TestBase
 import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types._
 
-class VerifyDataConversions extends TestBase {
+class VerifyDataConversion extends TestBase {
 
   import spark.implicits._
 
-  val testVal: Long = (Int.MaxValue).toLong + 100
+  val testVal: Long = Int.MaxValue.toLong + 100
   val testShort: Integer = Short.MaxValue + 100
   /*
   DataFrame for the numerical and string <--> numerical conversions
    */
-  lazy val masterInDF = Seq((true: Boolean, 1: Byte, 2: Short, 3: Integer, 4: Long, 5.0F, 6.0, "7", "8.0"),
+  lazy val masterInDF: DataFrame = Seq((true: Boolean, 1: Byte, 2: Short, 3: Integer, 4: Long, 5.0F, 6.0, "7", "8.0"),
     (false, 9: Byte, 10: Short, 11: Integer, 12: Long, 14.5F, 15.5, "16", "17.456"),
     (true, -127: Byte, 345: Short, testShort, testVal, 18.91F, 20.21, "100", "200.12345"))
     .toDF("bool", "byte", "short", "int", "long", "float", "double", "intstring", "doublestring")
@@ -28,7 +29,8 @@ class VerifyDataConversions extends TestBase {
   /*
   Dataframe of Timestamp data
    */
-  lazy val tsDF= Seq("1986-07-27 12:48:00.123", "1988-11-01 11:08:48.456", "1993-08-06 15:32:00.789").toDF("Col0")
+  lazy val tsDF: DataFrame = Seq("1986-07-27 12:48:00.123", "1988-11-01 11:08:48.456", "1993-08-06 15:32:00.789")
+    .toDF("Col0")
     .select($"Col0".cast("timestamp"))
 
   /*
@@ -36,15 +38,18 @@ class VerifyDataConversions extends TestBase {
   values to Timestamp.getTime()
    */
   val f = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS")
-  lazy val parseTimeFromString = udf((t:String)=>{new Timestamp(f.parse(t).getTime)})
-  lazy val lDF = Seq(f.parse("1986-07-27 12:48:00.123").getTime(),
-    f.parse("1988-11-01 11:08:48.456").getTime(),
-    f.parse("1993-08-06 15:32:00.789").getTime()).toDF("Col0")
+  lazy val parseTimeFromString: UserDefinedFunction = udf((t: String) => {
+    new Timestamp(f.parse(t).getTime)
+  })
+  lazy val lDF: DataFrame = Seq(f.parse("1986-07-27 12:48:00.123").getTime,
+    f.parse("1988-11-01 11:08:48.456").getTime,
+    f.parse("1993-08-06 15:32:00.789").getTime).toDF("Col0")
 
   /*
   Timestaps as strings dataframe
    */
-  lazy val sDF = Seq("1986-07-27 12:48:00.123", "1988-11-01 11:08:48.456", "1993-08-06 15:32:00.789").toDF("Col0")
+  lazy val sDF: DataFrame = Seq("1986-07-27 12:48:00.123", "1988-11-01 11:08:48.456", "1993-08-06 15:32:00.789")
+    .toDF("Col0")
 
   /*
   Test conversion of all numeric types to Boolean
@@ -59,7 +64,7 @@ class VerifyDataConversions extends TestBase {
     val r4 = new DataConversion().setCols(Array("long")).setConvertTo("boolean").transform(r3)
     val r5 = new DataConversion().setCols(Array("float")).setConvertTo("boolean").transform(r4)
     val r6 = new DataConversion().setCols(Array("double")).setConvertTo("boolean").transform(r5)
-    val expectedRes = Seq(( true, true, true, true, true, true, true, "7", "8.0"),
+    val expectedRes = Seq((true, true, true, true, true, true, true, "7", "8.0"),
       (false, true, true, true, true, true, true, "16", "17.456"),
       (true, true, true, true, true, true, true, "100", "200.12345"))
       .toDF("bool", "byte", "short", "int", "long", "float", "double", "intstring", "doublestring")
@@ -89,11 +94,11 @@ class VerifyDataConversions extends TestBase {
   at the least 32 bits, so a very large number will end up being a very large negative number
   */
   test("Test convert to Byte") {
-    val expectedDF = Seq(( 1: Byte, 1: Byte, 2: Byte, 3: Byte, 4: Byte, 5: Byte, 6: Byte, 7: Byte, 8: Byte),
+    val expectedDF = Seq((1: Byte, 1: Byte, 2: Byte, 3: Byte, 4: Byte, 5: Byte, 6: Byte, 7: Byte, 8: Byte),
       (0: Byte, 9: Byte, 10: Byte, 11: Byte, 12: Byte, 14: Byte, 127: Byte, 16: Byte, 17: Byte),
       (1: Byte, -127: Byte, 89: Byte, 99: Byte, 99: Byte, 18: Byte, 20: Byte, 100: Byte, -56: Byte))
       .toDF("bool", "byte", "short", "int", "long", "float", "double", "intstring", "doublestring")
-    val res =  generateRes("byte", masterInDF)
+    val res = generateRes("byte", masterInDF)
     assert(res.schema("bool").dataType == ByteType)
     assert(res.schema("short").dataType == ByteType)
     assert(res.schema("int").dataType == ByteType)
@@ -113,7 +118,7 @@ class VerifyDataConversions extends TestBase {
   at the least 32 bits, so a very large number will end up being a very large negative number
   */
   test("Test convert to Short") {
-    val expectedDF = Seq(( 1: Short, 1: Short, 2: Short, 3: Short, 4: Short, 5: Short, 6: Short, 7: Short, 8: Short),
+    val expectedDF = Seq((1: Short, 1: Short, 2: Short, 3: Short, 4: Short, 5: Short, 6: Short, 7: Short, 8: Short),
       (0: Short, 9: Short, 10: Short, 11: Short, 12: Short, 14: Short, 15: Short, 16: Short, 17: Short),
       (1: Short, -127: Short, 345: Short, -32669: Short, 99: Short, 18: Short, 20: Short, 100: Short, 200: Short))
       .toDF("bool", "byte", "short", "int", "long", "float", "double", "intstring", "doublestring")

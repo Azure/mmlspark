@@ -189,7 +189,7 @@ object LightGBMUtils {
     *
     * @return In cluster, returns the executor id.  In local case, returns the task id.
     */
-  def getId(): Int = {
+  def getId: Int = {
     val executorId = SparkEnv.get.executorId
     val ctx = TaskContext.get
     val partId = ctx.partitionId
@@ -211,7 +211,7 @@ object LightGBMUtils {
 
   def getNumRowsForChunksArray(numRows: Int, numCols: Int, defaultChunkSize: Int): SWIGTYPE_p_int = {
     var numChunks = Math.floorDiv(numRows, defaultChunkSize)
-    var leftoverChunk = numRows % defaultChunkSize
+    val leftoverChunk = numRows % defaultChunkSize
     if (leftoverChunk > 0) {
       numChunks += 1
     }

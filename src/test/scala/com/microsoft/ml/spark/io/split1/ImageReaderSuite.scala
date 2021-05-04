@@ -15,6 +15,7 @@ import org.apache.commons.io.IOUtils
 import org.apache.spark.injections.UDFUtils
 import org.apache.spark.ml.image.ImageSchema
 import org.apache.spark.ml.source.image.PatchedImageFileFormat
+import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.functions.{col, to_json, udf}
 import org.apache.spark.sql.types.StringType
 
@@ -52,8 +53,8 @@ class ImageReaderSuite extends TestBase with FileReaderUtils {
   }
 
   object UDFs extends Serializable {
-    val CifarDirectoryVal = cifarDirectory
-    val Rename = UDFUtils.oldUdf({ x: String => x.split("/").last }, StringType)
+    val CifarDirectoryVal: String = cifarDirectory
+    val Rename: UserDefinedFunction = UDFUtils.oldUdf({ x: String => x.split("/").last }, StringType)
   }
 
   def recursiveListFiles(f: File): Array[File] = {

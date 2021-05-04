@@ -62,8 +62,8 @@ class MixedParamTest(override val uid: String) extends TestEstimatorBase(uid)
 object MixedParamTest extends ComplexParamsReadable[MixedParamTest]
 
 class ValidateComplexParamSerializer extends TestBase {
-  val saveFile = new File(tmpDir.toFile, "m1.model").toString
-  val saveFile2 = new File(tmpDir.toFile, "m2.model").toString
+  val saveFile: String = new File(tmpDir.toFile, "m1.model").toString
+  val saveFile2: String = new File(tmpDir.toFile, "m2.model").toString
 
   test("Complex Param serialization should work on all complex, all normal, or mixed") {
     spark

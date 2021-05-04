@@ -60,7 +60,7 @@ class VerifyVowpalWabbitClassifier extends Benchmarks with EstimatorFuzzing[Vowp
 
     assert(model.getPerformanceStatistics.count == numPartitions)
 
-    var perfRow = model.getPerformanceStatistics.where("partitionId == 0").collect.head
+    val perfRow = model.getPerformanceStatistics.where("partitionId == 0").collect.head
 
     assert(perfRow.getDouble(perfRow.fieldIndex("powerT")) == 0.0)
     assert(803 + 802 == model.getPerformanceStatistics.agg(sum("numberOfExamplesPerPass")).collect().head.getLong(0))

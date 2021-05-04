@@ -6,7 +6,9 @@ package com.microsoft.ml.spark.nn
 import breeze.linalg.DenseVector
 import com.microsoft.ml.spark.core.test.base.TestBase
 import org.apache.spark.ml.linalg.{DenseVector => SDV}
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.lit
+
 import scala.collection.immutable
 
 trait BallTreeTestBase extends TestBase {
@@ -16,7 +18,7 @@ trait BallTreeTestBase extends TestBase {
       yield DenseVector((x * 2).toDouble, (y * 2).toDouble, (z * 2).toDouble)
   }
 
-  lazy val uniformLabels = randomClassLabels(uniformData, 5)
+  lazy val uniformLabels: IndexedSeq[Int] = randomClassLabels(uniformData, 5)
 
   lazy val largeUniformData: immutable.IndexedSeq[DenseVector[Double]] = {
     for (x <- 1 to 100; y <- 1 to 100; z <- 1 to 100)
@@ -48,26 +50,26 @@ trait BallTreeTestBase extends TestBase {
 
   lazy val randomData: IndexedSeq[DenseVector[Double]] = randomData(10000, 3)
 
-  lazy val df = spark
+  lazy val df: DataFrame = spark
     .createDataFrame(uniformData.zip(uniformLabels).map(p =>
       (new SDV(p._1.data), "foo", p._2)
     ))
     .toDF("features", "values", "labels")
 
-  lazy val stringDF = spark
+  lazy val stringDF: DataFrame = spark
     .createDataFrame(uniformData.zip(uniformLabels).map(p =>
       (new SDV(p._1.data), "foo", "class1")
     ))
     .toDF("features", "values", "labels")
 
-  lazy val testDF = spark
+  lazy val testDF: DataFrame = spark
     .createDataFrame(uniformData.zip(uniformLabels).take(5).map(p =>
       (new SDV(p._1.data), "foo", p._2)
     ))
     .toDF("features", "values", "labels")
     .withColumn("conditioner", lit(Array(0, 1)))
 
-  lazy val testStringDF = spark
+  lazy val testStringDF: DataFrame = spark
     .createDataFrame(uniformData.zip(uniformLabels).take(5).map(p =>
       (new SDV(p._1.data), "foo", "class1")
     ))

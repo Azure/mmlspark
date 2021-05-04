@@ -5,7 +5,7 @@ package com.microsoft.ml.spark.codegen
 
 import java.io.File
 import com.microsoft.ml.spark.build.BuildInfo
-import com.microsoft.ml.spark.codegen.Config._
+import com.microsoft.ml.spark.codegen.CodegenConfig._
 import com.microsoft.ml.spark.core.env.FileUtilities._
 import com.microsoft.ml.spark.core.test.base.TestBase
 import com.microsoft.ml.spark.core.test.fuzzing.PyTestFuzzing

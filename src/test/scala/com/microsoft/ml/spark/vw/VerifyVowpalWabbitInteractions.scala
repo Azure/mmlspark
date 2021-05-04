@@ -7,12 +7,13 @@ import com.microsoft.ml.spark.core.test.base.TestBase
 import com.microsoft.ml.spark.core.test.fuzzing.{TestObject, TransformerFuzzing}
 import org.apache.spark.ml.linalg.{SparseVector, Vector, Vectors}
 import org.apache.spark.ml.util.MLReadable
+import org.apache.spark.sql.DataFrame
 
 class VerifyVowpalWabbitInteractions extends TestBase with TransformerFuzzing[VowpalWabbitInteractions] {
 
   case class Data(v1: Vector, v2: Vector, v3: Vector)
 
-  lazy val df = spark.createDataFrame(Seq(Data(
+  lazy val df: DataFrame = spark.createDataFrame(Seq(Data(
     Vectors.dense(Array(1.0, 2.0, 3.0)),
     Vectors.sparse(8, Array(5), Array(4.0)),
     Vectors.sparse(11, Array(8, 9), Array(7.0, 8.0))

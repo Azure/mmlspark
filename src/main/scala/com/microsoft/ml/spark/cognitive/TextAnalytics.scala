@@ -71,10 +71,10 @@ abstract class TextAnalyticsBase(override val uid: String) extends CognitiveServ
         post.setHeader("Content-Type", "application/json")
         val texts = getValue(row, text)
 
-        val languages: Option[Seq[String]] = (getValueOpt(row, language) match {
+        val languages: Option[Seq[String]] = getValueOpt(row, language) match {
           case Some(Seq(lang)) => Some(Seq.fill(texts.size)(lang))
           case s => s
-        })
+        }
 
         val documents = texts.zipWithIndex.map { case (t, i) =>
           TADocument(languages.flatMap(ls => Option(ls(i))), i.toString, Option(t).getOrElse(""))

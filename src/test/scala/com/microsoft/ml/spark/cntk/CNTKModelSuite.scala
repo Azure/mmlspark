@@ -16,7 +16,7 @@ import org.apache.spark.ml.linalg.DenseVector
 import org.apache.spark.ml.linalg.SQLDataTypes.VectorType
 import org.apache.spark.ml.util.MLReadable
 import org.apache.spark.ml.{Pipeline, PipelineModel}
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.types._
 
 import scala.util.Random
@@ -54,7 +54,7 @@ class CNTKModelSuite extends LinuxOnly with CNTKTestUtils with TransformerFuzzin
       .setOutputNodeIndex(0)
   }
 
-  lazy val images = testImages(spark)
+  lazy val images: DataFrame = testImages(spark)
 
   import spark.implicits._
 

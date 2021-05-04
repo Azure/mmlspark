@@ -22,5 +22,5 @@ trait HasNumBits extends Params {
   /**
     * @return the bitmask used to constrain the hash feature indices.
     */
-  protected def getMask: Int = ((1 << getNumBits) - 1)
+  protected def getMask: Int = (1 << getNumBits) - 1
 }

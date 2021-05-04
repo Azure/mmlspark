@@ -6,19 +6,18 @@ package com.microsoft.ml.spark.io.image
 import java.awt.color.ColorSpace
 import java.awt.image.{BufferedImage, DataBufferByte, Raster}
 import java.awt.{Color, Point}
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import java.io.ByteArrayInputStream
 
 import com.microsoft.ml.spark.core.env.StreamUtilities
+import com.microsoft.ml.spark.io.binary.ConfUtils
 import javax.imageio.ImageIO
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.io.IOUtils
 import org.apache.hadoop.fs.Path
-import org.apache.spark.binary.ConfUtils
 import org.apache.spark.ml.ImageInjections
 import org.apache.spark.ml.image.ImageSchema
 import org.apache.spark.sql.catalyst.InternalRow
 import org.apache.spark.sql.catalyst.encoders.RowEncoder
-import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row}
 
 import scala.util.Try

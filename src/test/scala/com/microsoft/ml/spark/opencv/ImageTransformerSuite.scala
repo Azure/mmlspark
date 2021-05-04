@@ -4,6 +4,7 @@
 package com.microsoft.ml.spark.opencv
 
 import java.awt.GridLayout
+import java.io.File
 import java.nio.file.Paths
 
 import com.microsoft.ml.spark.build.BuildInfo
@@ -24,7 +25,7 @@ import org.scalactic.Equality
 import org.scalatest.Assertion
 
 trait ImageTestUtils {
-  lazy protected val fileLocation = FileUtilities.join(BuildInfo.datasetDir, "Images", "Grocery")
+  lazy protected val fileLocation: File = FileUtilities.join(BuildInfo.datasetDir, "Images", "Grocery")
 
   protected def selectTestImageBytes(images: DataFrame): Array[Byte] = {
     images.filter(row => row.getString(4).contains("negative") && row.getString(4).endsWith("5.jpg"))
@@ -83,8 +84,8 @@ trait ImageTestUtils {
 
 class UnrollImageSuite extends TransformerFuzzing[UnrollImage] with ImageTestUtils with DataFrameEquality {
 
-  lazy val filesRoot =  BuildInfo.datasetDir
-  lazy val imagePath = FileUtilities.join(filesRoot,"Images", "CIFAR").toString
+  lazy val filesRoot: File =  BuildInfo.datasetDir
+  lazy val imagePath: String = FileUtilities.join(filesRoot,"Images", "CIFAR").toString
   lazy val images: DataFrame = spark.read.image.load(imagePath)
 
   test("roll and unroll") {
@@ -130,8 +131,8 @@ class UnrollImageSuite extends TransformerFuzzing[UnrollImage] with ImageTestUti
 class UnrollBinaryImageSuite extends TransformerFuzzing[UnrollBinaryImage]
   with ImageTestUtils with DataFrameEquality {
 
-  lazy val filesRoot = BuildInfo.datasetDir
-  lazy val imagePath = FileUtilities.join(filesRoot, "Images", "CIFAR").toString
+  lazy val filesRoot: File = BuildInfo.datasetDir
+  lazy val imagePath: String = FileUtilities.join(filesRoot, "Images", "CIFAR").toString
   lazy val images: DataFrame = spark.read.image.load(imagePath)
   lazy val binaryImages: DataFrame = spark.read.binary.load(imagePath)
     .withColumn("image", col("value.bytes"))
@@ -170,7 +171,7 @@ class ImageTransformerSuite extends TransformerFuzzing[ImageTransformer] with Im
     assert(true)
   }
 
-  lazy val images = spark.read.image.option("dropInvalid",true)
+  lazy val images: DataFrame = spark.read.image.option("dropInvalid",true)
     .load(FileUtilities.join(fileLocation, "**").toString)
 
   test("general workflow") {

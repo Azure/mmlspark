@@ -29,7 +29,7 @@ class TestCategoricalMap extends TestBase {
     assert(map.dataType == dataType, "dataType" + s)
     assert(map.getIndex(levels.head) == 0 & map.getIndex(levels.last) == levels.length - 1, "getIndex" + s)
     assert(map.getIndexOption(wrong_level) == None & map.getIndexOption(levels(1)) == Some(1), "getIndexOption" + s)
-    assert(map.hasLevel(levels(1)) == true & map.hasLevel(wrong_level) == false, "hasLevel" + s)
+    assert(map.hasLevel(levels(1)) & !map.hasLevel(wrong_level), "hasLevel" + s)
     assert(map.getLevel(1) == levels(1), "getLevel" + s)
     assert(map.getLevelOption(1) == Some(levels(1)) & map.getLevelOption(-1) == None, "getLevelOption" + s)
 
@@ -45,9 +45,9 @@ class TestCategoricalMap extends TestBase {
       testMapBasic(Array[Int](34, 54747, -346, 756, 0),
                    -45, IntegerType, isOrdinal, mmlStyle)
       testMapBasic(Array[Long](34, 54747, -346, 756, 0),
-                   (-45: Long), LongType, isOrdinal, mmlStyle)
+                   -45: Long, LongType, isOrdinal, mmlStyle)
       testMapBasic(Array[Double](34.45, 54.747, -3.46, 7.56, 0),
-                   (-45: Double), DoubleType, isOrdinal, mmlStyle)
+                   -45: Double, DoubleType, isOrdinal, mmlStyle)
     }
   }
 

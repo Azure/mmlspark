@@ -15,11 +15,11 @@ import scala.util.Random
 
 class DownloaderSuite extends TestBase {
 
-  lazy val saveDir = Files.createTempDirectory("Models-").toFile
+  lazy val saveDir: File = Files.createTempDirectory("Models-").toFile
   lazy val d = new ModelDownloader(spark, saveDir.toURI)
 
   test("retry utility should catch flakiness"){
-    (1 to 20).foreach { i =>
+    (1 to 20).foreach { _ =>
       val result = FaultToleranceUtils.retryWithTimeout(20, Duration.apply(2, "seconds")) {
         val r = Random.nextDouble()
         if (r > .5) {

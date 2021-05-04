@@ -26,8 +26,8 @@ import org.apache.spark.sql.streaming.{DataStreamReader, DataStreamWriter, Strea
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.{DataFrame, Row}
 
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration.{Duration, FiniteDuration}
+import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor, Future}
 import scala.util.parsing.json.JSONObject
 
 trait HasHttpClient {
@@ -153,9 +153,9 @@ trait HTTPTestUtils extends TestBase with WithFreeUrl with HasHttpClient {
     } / xs.size)
   }
 
-  lazy val requestDuration = Duration(10, TimeUnit.SECONDS)
+  lazy val requestDuration: FiniteDuration = Duration(10, TimeUnit.SECONDS)
 
-  lazy implicit val ec = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
+  lazy implicit val ec: ExecutionContextExecutor = ExecutionContext.fromExecutor(Executors.newCachedThreadPool())
 
   def assertLatency(responsesWithLatencies: Seq[(String, Double)], cutoff: Double): Unit = {
     val latencies = responsesWithLatencies.drop(3).map(_._2.toInt).toList
@@ -398,7 +398,7 @@ class DistributedHTTPSuite extends TestBase with Flaky with HTTPTestUtils {
         }
       }
 
-      val Foo = SharedSingleton {
+      val Foo: SharedSingleton[Holder.FooHolder] = SharedSingleton {
         new FooHolder
       }
 

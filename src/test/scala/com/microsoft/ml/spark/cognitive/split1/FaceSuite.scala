@@ -21,7 +21,7 @@ class DetectFaceSuite extends TransformerFuzzing[DetectFace] with CognitiveKey {
     "https://mmlspark.blob.core.windows.net/datasets/DSIR/test2.jpg"
   ).toDF("url")
 
-  lazy val face = new DetectFace()
+  lazy val face: DetectFace = new DetectFace()
     .setSubscriptionKey(cognitiveKey)
     .setLocation("eastus")
     .setImageUrlCol("url")
@@ -64,7 +64,7 @@ class FindSimilarFaceSuite extends TransformerFuzzing[FindSimilarFace] with Cogn
     "https://mmlspark.blob.core.windows.net/datasets/DSIR/test3.jpg"
   ).toDF("url")
 
-  lazy val detector = new DetectFace()
+  lazy val detector: DetectFace = new DetectFace()
     .setSubscriptionKey(cognitiveKey)
     .setLocation("eastus")
     .setImageUrlCol("url")
@@ -73,17 +73,17 @@ class FindSimilarFaceSuite extends TransformerFuzzing[FindSimilarFace] with Cogn
     .setReturnFaceLandmarks(false)
     .setReturnFaceAttributes(Seq())
 
-  lazy val fromRow = Face.makeFromRowConverter
+  lazy val fromRow: Row => Face = Face.makeFromRowConverter
 
-  lazy val faceIdDF = detector.transform(df)
+  lazy val faceIdDF: DataFrame = detector.transform(df)
     .select(
       col("detected_faces").getItem(0).getItem("faceId").alias("id"))
     .cache()
 
-  lazy val faceIds = faceIdDF.collect().map(row =>
+  lazy val faceIds: Array[String] = faceIdDF.collect().map(row =>
     row.getAs[String]("id"))
 
-  lazy val findSimilar = new FindSimilarFace()
+  lazy val findSimilar: FindSimilarFace = new FindSimilarFace()
     .setSubscriptionKey(cognitiveKey)
     .setLocation("eastus")
     .setOutputCol("similar")
@@ -114,7 +114,7 @@ class GroupFacesSuite extends TransformerFuzzing[GroupFaces] with CognitiveKey {
     "https://mmlspark.blob.core.windows.net/datasets/DSIR/test3.jpg"
   ).toDF("url")
 
-  lazy val detector = new DetectFace()
+  lazy val detector: DetectFace = new DetectFace()
     .setSubscriptionKey(cognitiveKey)
     .setLocation("eastus")
     .setImageUrlCol("url")
@@ -123,9 +123,9 @@ class GroupFacesSuite extends TransformerFuzzing[GroupFaces] with CognitiveKey {
     .setReturnFaceLandmarks(false)
     .setReturnFaceAttributes(Seq())
 
-  lazy val fromRow = Face.makeFromRowConverter
+  lazy val fromRow: Row => Face = Face.makeFromRowConverter
 
-  lazy val faceIdDF = detector.transform(df)
+  lazy val faceIdDF: DataFrame = detector.transform(df)
     .select(
       col("detected_faces").getItem(0).getItem("faceId").alias("id"))
     .cache()
@@ -133,7 +133,7 @@ class GroupFacesSuite extends TransformerFuzzing[GroupFaces] with CognitiveKey {
   lazy val faceIds: Array[String] = faceIdDF.collect().map(row =>
     row.getAs[String]("id"))
 
-  lazy val group = new GroupFaces()
+  lazy val group: GroupFaces = new GroupFaces()
     .setSubscriptionKey(cognitiveKey)
     .setLocation("eastus")
     .setOutputCol("grouping")
@@ -166,20 +166,20 @@ class IdentifyFacesSuite extends TransformerFuzzing[IdentifyFaces] with Cognitiv
     "https://mmlspark.blob.core.windows.net/datasets/DSIR/test3.jpg"
   )
 
-  lazy val pgName = "group" + UUID.randomUUID().toString
+  lazy val pgName: String = "group" + UUID.randomUUID().toString
 
-  lazy val pgId = {
+  lazy val pgId: String = {
     PersonGroup.create(pgName, pgName)
     PersonGroup.list().find(_.name == pgName).get.personGroupId
   }
 
-  lazy val satyaId = Person.create("satya", pgId)
-  lazy val bradId = Person.create("brad", pgId)
+  lazy val satyaId: String = Person.create("satya", pgId)
+  lazy val bradId: String = Person.create("brad", pgId)
 
-  lazy val satyaFaceIds = satyaFaces.map(Person.addFace(_, pgId, satyaId))
-  lazy val bradFaceIds = bradFaces.map(Person.addFace(_, pgId, bradId))
+  lazy val satyaFaceIds: Seq[String] = satyaFaces.map(Person.addFace(_, pgId, satyaId))
+  lazy val bradFaceIds: Seq[String] = bradFaces.map(Person.addFace(_, pgId, bradId))
 
-  lazy val detector = new DetectFace()
+  lazy val detector: DetectFace = new DetectFace()
     .setSubscriptionKey(cognitiveKey)
     .setLocation("eastus")
     .setImageUrlCol("url")
@@ -188,7 +188,7 @@ class IdentifyFacesSuite extends TransformerFuzzing[IdentifyFaces] with Cognitiv
     .setReturnFaceLandmarks(false)
     .setReturnFaceAttributes(Seq())
 
-  lazy val otherFaceIds = detector.transform((satyaFaces ++bradFaces).toDF("url"))
+  lazy val otherFaceIds: Seq[String] = detector.transform((satyaFaces ++bradFaces).toDF("url"))
     .select(col("detected_faces").getItem(0).getItem("faceId"))
     .collect()
     .map(r => r.getString(0)).toSeq
@@ -212,14 +212,14 @@ class IdentifyFacesSuite extends TransformerFuzzing[IdentifyFaces] with Cognitiv
     super.afterAll()
   }
 
-  lazy val id = new IdentifyFaces()
+  lazy val id: IdentifyFaces = new IdentifyFaces()
     .setSubscriptionKey(cognitiveKey)
     .setLocation("eastus")
     .setFaceIdsCol("faces")
     .setPersonGroupId(pgId)
     .setOutputCol("identified_faces")
 
-  lazy val df = otherFaceIds.map(Seq[String](_)).toDF("faces")
+  lazy val df: DataFrame = otherFaceIds.map(Seq[String](_)).toDF("faces")
 
   test("Basic Usage") {
     Person.list(pgId).foreach(println)
@@ -244,7 +244,7 @@ class VerifyFacesSuite extends TransformerFuzzing[VerifyFaces] with CognitiveKey
     "https://mmlspark.blob.core.windows.net/datasets/DSIR/test3.jpg"
   ).toDF("url")
 
-  lazy val detector = new DetectFace()
+  lazy val detector: DetectFace = new DetectFace()
     .setSubscriptionKey(cognitiveKey)
     .setLocation("eastus")
     .setImageUrlCol("url")
@@ -253,16 +253,16 @@ class VerifyFacesSuite extends TransformerFuzzing[VerifyFaces] with CognitiveKey
     .setReturnFaceLandmarks(false)
     .setReturnFaceAttributes(Seq())
 
-  lazy val fromRow = Face.makeFromRowConverter
+  lazy val fromRow: Row => Face = Face.makeFromRowConverter
 
-  lazy val faceIdDF = detector.transform(df)
+  lazy val faceIdDF: DataFrame = detector.transform(df)
     .select(col("detected_faces").getItem(0).getItem("faceId").alias("faceId1"))
     .cache()
 
-  lazy val faceIdDF2 = faceIdDF.withColumn(
+  lazy val faceIdDF2: DataFrame = faceIdDF.withColumn(
     "faceId2", lit(faceIdDF.take(1).head.getString(0)))
 
-  lazy val verify = new VerifyFaces()
+  lazy val verify: VerifyFaces = new VerifyFaces()
     .setSubscriptionKey(cognitiveKey)
     .setLocation("eastus")
     .setOutputCol("same")

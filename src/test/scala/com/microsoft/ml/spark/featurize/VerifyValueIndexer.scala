@@ -7,7 +7,7 @@ import com.microsoft.ml.spark.core.schema.{CategoricalColumnInfo, CategoricalUti
 import com.microsoft.ml.spark.core.test.base.TestBase
 import com.microsoft.ml.spark.core.test.fuzzing.{EstimatorFuzzing, TestObject, TransformerFuzzing}
 import org.apache.spark.ml.util.MLReadable
-import org.apache.spark.sql.Row
+import org.apache.spark.sql.{DataFrame, Row}
 
 import scala.collection.immutable.Seq
 
@@ -15,14 +15,14 @@ trait ValueIndexerUtilities extends TestBase {
   import spark.implicits._
 
   /** sample dataframe */
-  protected lazy val df = Seq[(Int, Long, Double, Boolean, String)](
+  protected lazy val df: DataFrame = Seq[(Int, Long, Double, Boolean, String)](
     (-3, 24L, 0.32534, true, "piano"),
     (1, 5L, 5.67, false, "piano"),
     (-3, 5L, 0.32534, false, "guitar"))
     .toDF("int", "long", "double", "bool", "string")
 
   /** sample dataframe with Null values*/
-  protected lazy val nullDF = Seq[(String, java.lang.Integer, java.lang.Double)](
+  protected lazy val nullDF: DataFrame = Seq[(String, java.lang.Integer, java.lang.Double)](
     ("Alice", null, 44.3),
     (null, 60, null),
     ("Josh", 25, Double.NaN),

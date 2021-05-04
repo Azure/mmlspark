@@ -28,7 +28,7 @@ import scala.util.Random
 /** Tests to validate the functionality of Evaluate Model module. */
 class VerifyComputeModelStatistics extends TransformerFuzzing[ComputeModelStatistics] {
   val labelColumn = "Label"
-  lazy val dataset = spark.createDataFrame(Seq(
+  lazy val dataset: DataFrame = spark.createDataFrame(Seq(
     (0, 2, 0.50, 0.60, 0),
     (1, 3, 0.40, 0.50, 1),
     (0, 4, 0.78, 0.99, 2),

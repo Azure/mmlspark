@@ -73,7 +73,7 @@ case class ClassifierTrainParams(parallelism: String, topK: Int, numIterations: 
                                  maxDeltaStep: Double, maxBinByFeature: Array[Int], minDataInLeaf: Int,
                                  featureNames: Array[String], delegate: Option[LightGBMDelegate])
   extends TrainParams {
-  override def toString(): String = {
+  override def toString: String = {
     val extraStr =
       if (objective != LightGBMConstants.BinaryObjective) s"num_class=$numClass"
       else s"is_unbalance=${isUnbalance.toString}"
@@ -97,7 +97,7 @@ case class RegressorTrainParams(parallelism: String, topK: Int, numIterations: I
                                 maxDeltaStep: Double, maxBinByFeature: Array[Int], minDataInLeaf: Int,
                                 featureNames: Array[String], delegate: Option[LightGBMDelegate])
   extends TrainParams {
-  override def toString(): String = {
+  override def toString: String = {
     s"alpha=$alpha tweedie_variance_power=$tweedieVariancePower boost_from_average=${boostFromAverage.toString} " +
       s"${super.toString()}"
   }
@@ -118,7 +118,7 @@ case class RankerTrainParams(parallelism: String, topK: Int, numIterations: Int,
                              maxDeltaStep: Double, maxBinByFeature: Array[Int], minDataInLeaf: Int,
                              featureNames: Array[String], delegate: Option[LightGBMDelegate])
   extends TrainParams {
-  override def toString(): String = {
+  override def toString: String = {
     val labelGainStr =
       if (labelGain.isEmpty) "" else s"label_gain=${labelGain.mkString(",")}"
     val evalAtStr =

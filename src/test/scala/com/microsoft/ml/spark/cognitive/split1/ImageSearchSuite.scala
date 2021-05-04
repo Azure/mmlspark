@@ -6,13 +6,14 @@ package com.microsoft.ml.spark.cognitive.split1
 import com.microsoft.ml.spark.Secrets
 import com.microsoft.ml.spark.cognitive.BingImageSearch
 import com.microsoft.ml.spark.core.test.fuzzing.{TestObject, TransformerFuzzing}
+import com.microsoft.ml.spark.stages.Lambda
 import org.apache.spark.ml.NamespaceInjections.pipelineModel
 import org.apache.spark.ml.util.MLReadable
 import org.apache.spark.sql.{DataFrame, Row}
 import org.scalactic.Equality
 
 trait HasImageSearchKey {
-  lazy val imageSearchKey = sys.env.getOrElse("BING_IMAGE_SEARCH_KEY", Secrets.BingImageSearchKey)
+  lazy val imageSearchKey: String = sys.env.getOrElse("BING_IMAGE_SEARCH_KEY", Secrets.BingImageSearchKey)
 }
 
 class ImageSearchSuite extends TransformerFuzzing[BingImageSearch]
@@ -27,7 +28,7 @@ class ImageSearchSuite extends TransformerFuzzing[BingImageSearch]
     .flatMap { q: String => offsets.map { o: Int => (q, o) } }
     .toDF("queries", "offsets")
 
-  lazy val bis = new BingImageSearch()
+  lazy val bis: BingImageSearch = new BingImageSearch()
     .setSubscriptionKey(imageSearchKey)
     .setOffsetCol("offsets")
     .setQueryCol("queries")
@@ -35,7 +36,7 @@ class ImageSearchSuite extends TransformerFuzzing[BingImageSearch]
     .setImageType("photo")
     .setOutputCol("images")
 
-  lazy val getURLs = BingImageSearch.getUrlTransformer("images", "url")
+  lazy val getURLs: Lambda = BingImageSearch.getUrlTransformer("images", "url")
 
   test("Elephant Detection") {
     val pipe = pipelineModel(Array(bis, getURLs))

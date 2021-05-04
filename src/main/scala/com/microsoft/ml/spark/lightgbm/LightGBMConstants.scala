@@ -12,7 +12,7 @@ object LightGBMConstants {
   val DefaultLocalListenPort = 12400
   /** Max port range available on machine, 65535
     */
-  val MaxPort = ((2 << 15) - 1)
+  val MaxPort: Int = (2 << 15) - 1
   /** The default timeout for LightGBM network initialization
     */
   val DefaultListenTimeout = 120

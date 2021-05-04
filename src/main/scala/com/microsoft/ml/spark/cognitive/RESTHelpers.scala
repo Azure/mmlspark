@@ -21,7 +21,7 @@ object RESTHelpers {
     .setSocketTimeout(RequestTimeout)
     .build()
 
-  lazy val ConnectionManager = {
+  lazy val ConnectionManager: PoolingHttpClientConnectionManager = {
     val cm = new PoolingHttpClientConnectionManager()
     cm.setDefaultMaxPerRoute(Int.MaxValue)
     cm.setMaxTotal(Int.MaxValue)

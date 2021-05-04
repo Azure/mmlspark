@@ -8,12 +8,13 @@ import com.microsoft.ml.spark.core.test.fuzzing.{TestObject, TransformerFuzzing}
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.param.ParamMap
 import org.apache.spark.ml.util.MLReadable
+import org.apache.spark.sql.DataFrame
 
 class RepartitionSuite extends TestBase with TransformerFuzzing[Repartition] {
 
   import spark.implicits._
 
-  lazy val input = Seq(
+  lazy val input: DataFrame = Seq(
     (0, "guitars", "drums"),
     (1, "piano", "trumpet"),
     (2, "bass", "cymbals"),

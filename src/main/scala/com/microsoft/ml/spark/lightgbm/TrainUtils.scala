@@ -424,10 +424,8 @@ private object TrainUtils extends Serializable {
       else if (metadata.attributes.get.isEmpty) None
       else {
         val colnames = (0 until numCols).map(_.toString).toArray
-        metadata.attributes.get.foreach {
-          case attr =>
-            attr.index.foreach(index => colnames(index) = attr.name.getOrElse(index.toString))
-        }
+        metadata.attributes.get.foreach(attr =>
+          attr.index.foreach(index => colnames(index) = attr.name.getOrElse(index.toString)))
         Some(colnames)
       }
     }
@@ -509,7 +507,7 @@ private object TrainUtils extends Serializable {
   }
 
   private def findOpenPort(defaultListenPort: Int, numTasksPerExec: Int, log: Logger): Socket = {
-    val basePort = defaultListenPort + (LightGBMUtils.getId() * numTasksPerExec)
+    val basePort = defaultListenPort + (LightGBMUtils.getId * numTasksPerExec)
     if (basePort > LightGBMConstants.MaxPort) {
       throw new Exception(s"Error: port $basePort out of range, possibly due to too many executors or unknown error")
     }

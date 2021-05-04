@@ -93,7 +93,7 @@ class HTTPTransformer(val uid: String)
 
   def this() = this(Identifiable.randomUID("HTTPTransformer"))
 
-  val clientHolder = SharedVariable {
+  val clientHolder: SharedVariable[HTTPClient] = SharedVariable {
     getConcurrency match {
       case 1 => new SingleThreadedHTTPClient(getHandler, (getTimeout*1000).toInt)
       case n if n > 1 =>

@@ -667,7 +667,7 @@ private[streaming] class WorkerServer(val name: String,
   server.start()
   logInfo(s"successfully started server at ${config.host}:$foundPort")
 
-  val reporting = Future {
+  val reporting: Future[Unit] = Future {
     client.reportServerToDriver(
       s"http://${config.driverServiceHost}:${config.driverServicePort}/driverService",
       ServiceInfo(name, config.host, foundPort, config.path, getMachineLocalIp, getMachinePublicIp)

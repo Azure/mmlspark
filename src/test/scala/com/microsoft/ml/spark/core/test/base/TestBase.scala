@@ -3,7 +3,7 @@
 
 package com.microsoft.ml.spark.core.test.base
 
-import java.nio.file.Files
+import java.nio.file.{Files, Path}
 
 import org.apache.commons.io.FileUtils
 import org.apache.spark._
@@ -11,7 +11,7 @@ import org.apache.spark.ml._
 import org.apache.spark.ml.linalg.DenseVector
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.{DataFrame, _}
-import org.apache.spark.streaming.{Seconds => SparkSeconds, StreamingContext}
+import org.apache.spark.streaming.{StreamingContext, Seconds => SparkSeconds}
 import org.scalactic.source.Position
 import org.scalactic.{Equality, TolerantNumerics}
 import org.scalatest._
@@ -90,19 +90,19 @@ trait TimeLimitedFlaky extends TestBase with TimeLimits {
 
 abstract class TestBase extends FunSuite with BeforeAndAfterEachTestData with BeforeAndAfterAll {
 
-  lazy val spark = TestBase.spark
-  lazy val sc = TestBase.sc
-  lazy val ssc = TestBase.ssc
+  lazy val spark: SparkSession = TestBase.spark
+  lazy val sc: SparkContext = TestBase.sc
+  lazy val ssc: StreamingContext = TestBase.ssc
 
-  protected lazy val dir = SparkSessionFactory.WorkingDir
+  protected lazy val dir: String = SparkSessionFactory.WorkingDir
 
   private var tmpDirCreated = false
-  protected lazy val tmpDir = {
+  protected lazy val tmpDir: Path = {
     tmpDirCreated = true
     Files.createTempDirectory("MML-Test-")
   }
 
-  protected def normalizePath(path: String) = SparkSessionFactory.customNormalize(path)
+  protected def normalizePath(path: String): String = SparkSessionFactory.customNormalize(path)
 
   // Timing info
   var suiteElapsed: Long = 0

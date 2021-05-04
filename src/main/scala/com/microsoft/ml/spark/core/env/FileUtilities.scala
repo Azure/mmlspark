@@ -26,7 +26,7 @@ object FileUtilities {
     val CREATE = S.CREATE
   }
 
-  def allFiles(dir: File, pred: (File => Boolean) = null): Array[File] = {
+  def allFiles(dir: File, pred: File => Boolean = null): Array[File] = {
     def loop(dir: File): Array[File] = {
       val (dirs, files) = dir.listFiles.sorted.partition(_.isDirectory)
       (if (pred == null) files else files.filter(pred)) ++ dirs.flatMap(loop)
@@ -49,7 +49,7 @@ object FileUtilities {
   }
 
   def copyFile(from: File, toDir: File, overwrite: Boolean = false): Unit = {
-    Files.copy(from.toPath, (new File(toDir, from.getName)).toPath,
+    Files.copy(from.toPath, new File(toDir, from.getName).toPath,
                (if (overwrite) Seq(StandardCopyOption.REPLACE_EXISTING)
                 else Seq()): _*)
     ()

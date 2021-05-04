@@ -9,15 +9,13 @@ import com.microsoft.ml.spark.core.test.base.{Flaky, TestBase}
 import com.microsoft.ml.spark.core.test.fuzzing.{TestObject, TransformerFuzzing}
 import org.apache.spark.ml.NamespaceInjections.pipelineModel
 import org.apache.spark.ml.util.MLReadable
-import org.apache.spark.sql.functions.{corr, typedLit}
+import org.apache.spark.sql.functions.typedLit
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.scalactic.Equality
-import org.scalatest.Assertion
-import com.microsoft.ml.spark.FluentAPI._
-import com.microsoft.ml.spark.featurize.text.PageSplitter
+import com.microsoft.ml.spark.core.spark.FluentAPI._
 
 trait CognitiveKey {
-  lazy val cognitiveKey = sys.env.getOrElse("COGNITIVE_API_KEY", Secrets.CognitiveApiKey)
+  lazy val cognitiveKey: String = sys.env.getOrElse("COGNITIVE_API_KEY", Secrets.CognitiveApiKey)
 }
 
 trait OCRUtils extends TestBase {
@@ -43,14 +41,14 @@ trait OCRUtils extends TestBase {
 
 class OCRSuite extends TransformerFuzzing[OCR] with CognitiveKey with Flaky with OCRUtils {
 
-  lazy val ocr = new OCR()
+  lazy val ocr: OCR = new OCR()
     .setSubscriptionKey(cognitiveKey)
     .setLocation("eastus")
     .setImageUrlCol("url")
     .setDetectOrientation(true)
     .setOutputCol("ocr")
 
-  lazy val bytesOCR = new OCR()
+  lazy val bytesOCR: OCR = new OCR()
     .setSubscriptionKey(cognitiveKey)
     .setLocation("eastus")
     .setImageBytesCol("imageBytes")

@@ -6,20 +6,20 @@ package com.microsoft.ml.spark.io.split1
 import java.io.{File, FileOutputStream}
 import java.net.URI
 
-import com.microsoft.ml.spark.Binary.implicits._
-import com.microsoft.ml.spark.BinaryFileReader
 import com.microsoft.ml.spark.build.BuildInfo
 import com.microsoft.ml.spark.core.env.FileUtilities
 import com.microsoft.ml.spark.core.env.FileUtilities.zipFolder
 import com.microsoft.ml.spark.core.schema.BinaryFileSchema
 import com.microsoft.ml.spark.core.schema.BinaryFileSchema.isBinaryFile
 import com.microsoft.ml.spark.core.test.base.TestBase
+import com.microsoft.ml.spark.io.binary.Binary.implicits.implicitSession
+import com.microsoft.ml.spark.io.binary.{BinaryFileFormat, BinaryFileReader}
 import org.apache.commons.io.{FileUtils, IOUtils}
 import org.apache.hadoop.fs.Path
-import org.apache.spark.binary.BinaryFileFormat
 import org.apache.spark.injections.UDFUtils
 import org.apache.spark.ml.param.DataFrameEquality
-import org.apache.spark.sql.functions.{col, udf}
+import org.apache.spark.sql.expressions.UserDefinedFunction
+import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.StringType
 
 trait FileReaderUtils {
@@ -37,8 +37,8 @@ class BinaryFileReaderSuite extends TestBase with FileReaderUtils with DataFrame
   }
 
   object UDFs extends Serializable {
-    val CifarDirectoryVal = cifarDirectory
-    val Rename = UDFUtils.oldUdf({ x: String => new Path(x).getName}, StringType)
+    val CifarDirectoryVal: String = cifarDirectory
+    val Rename: UserDefinedFunction = UDFUtils.oldUdf({ x: String => new Path(x).getName}, StringType)
   }
 
   test("binary dataframe") {

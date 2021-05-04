@@ -3,7 +3,7 @@
 
 package com.microsoft.ml.spark.lime
 
-import com.microsoft.ml.spark.FluentAPI._
+import com.microsoft.ml.spark.core.spark.FluentAPI._
 import com.microsoft.ml.spark.codegen.Wrappable
 import com.microsoft.ml.spark.core.schema.DatasetExtensions
 import com.microsoft.ml.spark.logging.BasicLogging

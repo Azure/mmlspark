@@ -21,7 +21,7 @@ import org.apache.commons.io.FileUtils
 import org.apache.spark.injections.UDFUtils
 import org.apache.spark.ml.linalg.DenseVector
 import org.apache.spark.ml.param.DataFrameEquality
-import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.ml.regression.{LinearRegression, LinearRegressionModel}
 import org.apache.spark.ml.util.MLReadable
 import org.apache.spark.ml.{NamespaceInjections, PipelineModel}
 import org.apache.spark.sql.functions.col
@@ -39,22 +39,22 @@ trait LimeTestBase extends TestBase {
   lazy val m: DenseMatrix[Double] = new DenseMatrix(d1, d2, Array(1.0, -1.0, 2.0))
   lazy val x: DenseMatrix[Double] = DenseMatrix.rand(nRows, d1, Rand.gaussian)
   lazy val noise: DenseMatrix[Double] = DenseMatrix.rand(nRows, d2, Rand.gaussian) * 0.1
-  lazy val y = x * m //+ noise
+  lazy val y: DenseMatrix[Double] = x * m //+ noise
 
-  lazy val xRows = x(*, ::).iterator.toSeq.map(dv => new DenseVector(dv.toArray))
-  lazy val yRows = y(*, ::).iterator.toSeq.map(dv => dv(0))
-  lazy val df = xRows.zip(yRows).toDF("features", "label")
+  lazy val xRows: Seq[DenseVector] = x(*, ::).iterator.toSeq.map(dv => new DenseVector(dv.toArray))
+  lazy val yRows: Seq[Double] = y(*, ::).iterator.toSeq.map(dv => dv(0))
+  lazy val df: DataFrame = xRows.zip(yRows).toDF("features", "label")
 
-  lazy val model = new LinearRegression().fit(df)
+  lazy val model: LinearRegressionModel = new LinearRegression().fit(df)
 
-  lazy val lime = new TabularLIME()
+  lazy val lime: TabularLIME = new TabularLIME()
     .setModel(model)
     .setInputCol("features")
     .setPredictionCol(model.getPredictionCol)
     .setOutputCol("out")
     .setNSamples(1000)
 
-  lazy val limeModel = lime.fit(df)
+  lazy val limeModel: TabularLIMEModel = lime.fit(df)
 }
 
 class TabularLIMESuite extends EstimatorFuzzing[TabularLIME] with

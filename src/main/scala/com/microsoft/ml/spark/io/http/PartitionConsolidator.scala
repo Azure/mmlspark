@@ -114,7 +114,7 @@ class PartitionConsolidator(val uid: String)
 
   def this() = this(Identifiable.randomUID("PartitionConsolidator"))
 
-  val consolidatorHolder = SharedSingleton {
+  val consolidatorHolder: SharedSingleton[Consolidator[Row]] = SharedSingleton {
     new Consolidator[Row]()
   }
 

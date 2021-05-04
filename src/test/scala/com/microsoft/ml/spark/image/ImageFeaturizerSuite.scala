@@ -38,7 +38,7 @@ trait NetworkUtils extends CNTKTestUtils with FileReaderUtils {
   lazy val binaryImages: DataFrame = spark.read.binary.load(imagePath)
     .select(col("value.bytes").alias(inputCol))
 
-  lazy val groceriesPath = FileUtilities.join(BuildInfo.datasetDir, "Images","Grocery")
+  lazy val groceriesPath: File = FileUtilities.join(BuildInfo.datasetDir, "Images","Grocery")
   lazy val groceryImages: DataFrame = spark.read.image
     .option("dropInvalid", true)
     .load(groceriesPath + "**")
@@ -193,7 +193,7 @@ class ImageFeaturizerSuite extends TransformerFuzzing[ImageFeaturizer]
         .setInputCol(inputCol)
         .setOutputCol(outputCol)
         .setCutOutputLayers(i)
-      val result = model.transform(images)
+      model.transform(images)
     })
   }
 

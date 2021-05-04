@@ -19,7 +19,6 @@ import com.microsoft.ml.spark.core.contracts.HasOutputCol
 import com.microsoft.ml.spark.core.schema.{DatasetExtensions, SparkBindings}
 import com.microsoft.ml.spark.io.http.HasURL
 import com.microsoft.ml.spark.logging.BasicLogging
-import com.microsoft.ml.spark.{CompressedStream, WavStream}
 import org.apache.commons.io.FilenameUtils
 import org.apache.hadoop.fs.Path
 import org.apache.spark.broadcast.Broadcast
@@ -481,7 +480,7 @@ class SpeechToTextSDK(override val uid: String) extends SpeechSDKBase with Basic
       }(ExecutionContext.global)
     }
 
-    new BlockingQueueIterator[String](queue, cleanUp).map { jsonString =>
+    new BlockingQueueIterator[String](queue, cleanUp()).map { jsonString =>
       //println(jsonString)
       jsonString.parseJson.convertTo[SpeechResponse]
     }

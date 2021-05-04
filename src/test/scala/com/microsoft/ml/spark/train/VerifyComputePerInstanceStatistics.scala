@@ -16,8 +16,8 @@ import com.microsoft.ml.spark.train.TrainClassifierTestUtilities._
 class VerifyComputePerInstanceStatistics extends TestBase {
 
   val labelColumn = "label"
-  lazy val predictionColumn = SchemaConstants.SparkPredictionColumn
-  lazy val dataset = spark.createDataFrame(Seq(
+  lazy val predictionColumn: String = SchemaConstants.SparkPredictionColumn
+  lazy val dataset: DataFrame = spark.createDataFrame(Seq(
     (0.0, 2, 0.50, 0.60, 0.0),
     (1.0, 3, 0.40, 0.50, 1.0),
     (2.0, 4, 0.78, 0.99, 2.0),

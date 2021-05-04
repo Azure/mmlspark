@@ -6,6 +6,7 @@ package com.microsoft.ml.spark.stages
 import com.microsoft.ml.spark.core.test.base.TestBase
 import com.microsoft.ml.spark.core.test.fuzzing.{TestObject, TransformerFuzzing}
 import org.apache.spark.ml.util.MLReadable
+import org.apache.spark.sql.DataFrame
 
 class TextPreprocessorSuite extends TestBase with TransformerFuzzing[TextPreprocessor] {
   val toMap1 = "The happy sad boy drank sap"
@@ -14,24 +15,24 @@ class TextPreprocessorSuite extends TestBase with TransformerFuzzing[TextPreproc
   val inputCol = "words1"
   val outputCol = "out"
 
-  lazy val expectedResult = spark.createDataFrame(Seq(
+  lazy val expectedResult: DataFrame = spark.createDataFrame(Seq(
     (toMap1, "The sad sap boy drank sap"),
     (toMap2, "The sap sap drank sap"),
     ("foo", "foo"),
     (s"$toMap3 aABc0123456789Zz_", "The sap sap")))
     .toDF(inputCol, outputCol)
 
-  lazy val wordDF = expectedResult.drop(outputCol)
+  lazy val wordDF: DataFrame = expectedResult.drop(outputCol)
 
-  lazy val testMap = Map[String, String] (
+  lazy val testMap: Map[String, String] = Map[String, String] (
     "happy"   -> "sad",
     "hater"   -> "sap",
     "sad"     -> "sap",
     "sad doy" -> "sap"
   )
 
-  lazy val testTrie1 = Trie(Map[String, String]("happy" -> "sad", "hater" -> "sap"))
-  lazy val testTrie1Pivot = {
+  lazy val testTrie1: Trie = Trie(Map[String, String]("happy" -> "sad", "hater" -> "sap"))
+  lazy val testTrie1Pivot: Trie = {
     var testTrie1Pivot1: Trie = testTrie1
     for (letter <- "ha") testTrie1Pivot1 = testTrie1Pivot1.get(letter).get
     testTrie1Pivot1

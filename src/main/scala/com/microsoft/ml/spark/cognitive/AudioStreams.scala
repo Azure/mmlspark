@@ -1,7 +1,7 @@
 // Copyright (C) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See LICENSE in project root for information.
 
-package com.microsoft.ml.spark
+package com.microsoft.ml.spark.cognitive
 
 import java.io.InputStream
 
@@ -15,7 +15,7 @@ import com.microsoft.cognitiveservices.speech.audio.PullAudioInputStreamCallback
   */
 class WavStream(val wavStream: InputStream) extends PullAudioInputStreamCallback {
 
-  val stream = parseWavHeader(wavStream)
+  val stream: InputStream = parseWavHeader(wavStream)
 
   override def read(dataBuffer: Array[Byte]): Int = {
     Math.max(0, stream.read(dataBuffer, 0, dataBuffer.length))

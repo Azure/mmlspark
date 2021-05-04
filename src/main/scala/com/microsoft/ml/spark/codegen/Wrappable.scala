@@ -379,7 +379,7 @@ trait PythonWrappable extends BaseWrappable {
     val importPath = this.getClass.getName.split(".".toCharArray).dropRight(1)
     val srcFolders = importPath.mkString(".")
       .replaceAllLiterally("com.microsoft.ml.spark", "mmlspark").split(".".toCharArray)
-    val srcDir = FileUtilities.join((Seq(Config.PySrcDir.toString) ++ srcFolders.toSeq): _*)
+    val srcDir = FileUtilities.join((Seq(CodegenConfig.PySrcDir.toString) ++ srcFolders.toSeq): _*)
     srcDir.mkdirs()
     Files.write(
       FileUtilities.join(srcDir, pyClassName + ".py").toPath,
@@ -501,9 +501,9 @@ trait RWrappable extends BaseWrappable {
   }
 
   def makeRFile(): Unit = {
-    Config.RSrcDir.mkdirs()
+    CodegenConfig.RSrcDir.mkdirs()
     Files.write(
-      FileUtilities.join(Config.RSrcDir, rFuncName + ".R").toPath,
+      FileUtilities.join(CodegenConfig.RSrcDir, rFuncName + ".R").toPath,
       rClass().getBytes(StandardCharsets.UTF_8))
   }
 
