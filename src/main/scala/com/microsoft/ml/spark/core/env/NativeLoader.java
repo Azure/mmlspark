@@ -27,14 +27,12 @@ import java.nio.file.Files;
  * */
 public class NativeLoader implements Serializable {
 
-    private String resourcesPath;
+    private final String resourcesPath;
     private Boolean extractionDone = false;
-    private File tempDir;
+    private File tempDir = null;
 
-    public NativeLoader(String topLevelResourcesPath) throws IOException {
+    public NativeLoader(String topLevelResourcesPath) {
         this.resourcesPath = getResourcesPath(topLevelResourcesPath);
-        tempDir = Files.createTempDirectory("mml-natives").toFile();
-        tempDir.deleteOnExit();
     }
 
     /**
@@ -56,7 +54,7 @@ public class NativeLoader implements Serializable {
                 libName = System.mapLibraryName(libName);
                 extractNativeLibraries(libName);
                 // Try to load library from extracted native resources
-                System.load(tempDir.getAbsolutePath() + File.separator + libName);
+                System.load(getOrCreateTempDir().getAbsolutePath() + File.separator + libName);
             }
             catch (Exception ee) {
                 throw new UnsatisfiedLinkError(String.format(
@@ -78,6 +76,15 @@ public class NativeLoader implements Serializable {
                     String.format("This component doesn't currently have native support for OS: %s", OS)
             );
         }
+    }
+
+    private File getOrCreateTempDir() throws IOException {
+        if (tempDir == null) {
+            tempDir = Files.createTempDirectory("mml-natives").toFile();
+            tempDir.deleteOnExit();
+        }
+
+        return tempDir;
     }
 
     private void extractNativeLibraries(String libName) throws IOException {
@@ -106,7 +113,7 @@ public class NativeLoader implements Serializable {
 
     private void extractResourceFromPath(String libName, String prefix) throws IOException {
 
-        File temp = new File(tempDir.getPath() + File.separator + libName);
+        File temp = new File(getOrCreateTempDir().getPath() + File.separator + libName);
         temp.createNewFile();
         temp.deleteOnExit();
 
