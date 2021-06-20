@@ -59,7 +59,10 @@ object DatabricksUtilities extends HasHttpClient {
   val TimeoutInMillis: Int = 40 * 60 * 1000
 
   val NotebookFiles: Array[File] = Option(
-    FileUtilities.join(BuildInfo.baseDirectory, "notebooks", "samples").getCanonicalFile.listFiles()
+    FileUtilities
+      .join(BuildInfo.baseDirectory, "notebooks", "samples")
+      .getCanonicalFile.listFiles()
+      .filter(file=> file.getAbsolutePath.endsWith(".ipynb"))
   ).get
 
   val ParallizableNotebooks = NotebookFiles.filterNot(_.getName.contains("Vowpal"))

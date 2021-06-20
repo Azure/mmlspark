@@ -3,18 +3,17 @@
 
 package com.microsoft.ml.spark.nbtest
 
-import java.util.concurrent.TimeUnit
-
 import com.microsoft.ml.spark.core.test.base.TestBase
 import com.microsoft.ml.spark.nbtest.DatabricksUtilities._
 
+import java.util.concurrent.TimeUnit
 import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.language.existentials
 
 /** Tests to validate fuzzing of modules. */
-class NotebookTests extends TestBase {
+class DatabricksTests extends TestBase {
 
   test("Databricks Notebooks") {
     val clusterId = createClusterInPool(ClusterName, PoolId)

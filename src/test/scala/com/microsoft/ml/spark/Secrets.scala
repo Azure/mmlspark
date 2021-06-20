@@ -50,5 +50,7 @@ object Secrets {
   lazy val BingSearchKey: String = getSecret("bing-search-key")
   lazy val PowerbiURL: String = getSecret("powerbi-url")
   lazy val AdbToken: String = getSecret("adb-token")
+  lazy val SynapseStorageKey: String = getSecret("mmlsparkbuildsynapse-key")
+  lazy val SynapseSpnKey: String = getSecret("synapse-spn-key")
 
 }

@@ -17,3 +17,5 @@ dependencies:
     - coverage
     - pytest
     - pytest-cov
+    - nbconvert
+    - ipython
