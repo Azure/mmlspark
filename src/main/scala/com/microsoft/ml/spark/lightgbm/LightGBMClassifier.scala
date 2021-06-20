@@ -83,6 +83,7 @@ class LightGBMClassifier(override val uid: String)
 trait HasActualNumClasses extends Params {
   val actualNumClasses = new IntParam(this, "actualNumClasses",
     "Inferred number of classes based on dataset metadata or, if there is no metadata, unique count")
+  setDefault(actualNumClasses -> 2)
 
   def getActualNumClasses: Int = $(actualNumClasses)
   def setActualNumClasses(value: Int): this.type = set(actualNumClasses, value)
