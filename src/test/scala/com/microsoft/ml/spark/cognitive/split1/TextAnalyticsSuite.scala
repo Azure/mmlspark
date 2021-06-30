@@ -324,7 +324,8 @@ class NERSuite extends TransformerFuzzing[NERV2] with TextKey {
 
   lazy val df: DataFrame = Seq(
     ("1", "en", "Jeff bought three dozen eggs because there was a 50% discount."),
-    ("2", "en", "The Great Depression began in 1929. By 1933, the GDP in America fell by 25%.")
+    ("2", "en", "In 1929, The Great Depression began. By 1933, the GDP in America fell by 25%."),
+    ("3", "es", "Jeff fue a la cine la semana pasada")
   ).toDF("id", "language", "text")
 
   lazy val n: NERV2 = new NERV2()
@@ -349,6 +350,25 @@ class NERSuite extends TransformerFuzzing[NERV2] with TextKey {
     assert(testRow.getAs[String]("text") === "Jeff")
     assert(testRow.getAs[Int]("offset") === 0)
     assert(testRow.getAs[Int]("length") === 4)
+
+  }
+
+  test("Usage in Spanish") {
+    val results = n.transform(df)
+    val matches = results.withColumn("match",
+      col("response")
+        .getItem(0)
+        .getItem("entities")
+        .getItem("matches")
+        .getItem(0)
+        .getItem(0))
+      .select("match")
+
+    val testRow = matches.collect()(2).asInstanceOf[GenericRowWithSchema]
+
+    assert(testRow.getAs[String]("text") === "Jeff")
+    assert(testRow.getAs[Int]("offset") === 3)
+    assert(testRow.getAs[Int]("length") === 5)
 
   }
 

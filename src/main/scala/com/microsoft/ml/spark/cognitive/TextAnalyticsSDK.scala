@@ -1,15 +1,13 @@
 package com.microsoft.ml.spark.cognitive
-import com.azure.ai.textanalytics.models.{ExtractKeyPhraseResult, KeyPhrasesCollection, TextAnalyticsRequestOptions,
-  TextAnalyticsWarning,AssessmentSentiment, DocumentSentiment,
-  SentenceSentiment, SentimentConfidenceScores, TargetSentiment}
-import com.azure.ai.textanalytics.implementation.models.SentenceOpinionSentiment
+
+import com.azure.ai.textanalytics.models.{AssessmentSentiment, DocumentSentiment,SentenceSentiment,
+  SentimentConfidenceScores, TargetSentiment, TextAnalyticsRequestOptions}
 import com.azure.ai.textanalytics.{TextAnalyticsClient, TextAnalyticsClientBuilder}
 import com.azure.core.credential.AzureKeyCredential
-import com.microsoft.ml.spark.core.contracts.{HasConfidenceScoreCol, HasInputCol}
+import com.microsoft.ml.spark.core.contracts.{HasConfidenceScoreCol, HasInputCol, HasLangCol, HasOutputCol}
 import com.microsoft.ml.spark.core.schema.SparkBindings
 import com.microsoft.ml.spark.io.http.HasErrorCol
 import com.microsoft.ml.spark.logging.BasicLogging
-import org.apache.http.client.methods.HttpRequestBase
 import org.apache.spark.injections.UDFUtils
 import org.apache.spark.ml.param.{Param, ParamMap, ServiceParam}
 import org.apache.spark.ml.util.Identifiable._
@@ -17,18 +15,15 @@ import org.apache.spark.ml.{ComplexParamsReadable, ComplexParamsWritable, Transf
 import org.apache.spark.sql.functions.col
 import org.apache.spark.sql.types.{DataTypes, StructType}
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
-import com.azure.ai.textanalytics.models
-
-import java.net.URI
 import scala.collection.JavaConverters._
 
 abstract class TextAnalyticsSDKBase[T](val textAnalyticsOptions: Option[TextAnalyticsRequestOptions] = None)
   extends Transformer
-  with HasInputCol with HasErrorCol
-  with HasEndpoint with HasSubscriptionKey
+  with HasInputCol with HasOutputCol with HasErrorCol
+  with HasEndpoint with HasSubscriptionKey with HasLangCol
   with ComplexParamsWritable with BasicLogging {
 
-  protected val invokeTextAnalytics: String => TAResponseV4[T]
+  protected val invokeTextAnalytics: (String, String) => TAResponseV4[T]
 
   protected def outputSchema: StructType
 
@@ -41,9 +36,8 @@ abstract class TextAnalyticsSDKBase[T](val textAnalyticsOptions: Option[TextAnal
   override def transform(dataset: Dataset[_]): DataFrame = {
     logTransform[DataFrame]({
       val invokeTextAnalyticsUdf = UDFUtils.oldUdf(invokeTextAnalytics, outputSchema)
-      val inputColNames = dataset.columns.mkString(",")
-      dataset.withColumn("Out", invokeTextAnalyticsUdf(col($(inputCol))))
-        .select(inputColNames, "Out.result.*", "Out.error.*", "Out.statistics.*", "Out.*")
+      dataset.withColumn($(outputCol), invokeTextAnalyticsUdf(col($(inputCol)), col($(langCol))))
+        .select($(inputCol), "Out.result.*", "Out.error.*", "Out.statistics.*", "Out.*")
         .drop("result", "error", "statistics")
     })
   }
@@ -52,16 +46,7 @@ abstract class TextAnalyticsSDKBase[T](val textAnalyticsOptions: Option[TextAnal
     // Validate input schema
     val inputType = schema($(inputCol)).dataType
     require(inputType.equals(DataTypes.StringType), s"The input column must be of type String, but got $inputType")
-
-    // Making sure input schema doesn't overlap with output schema
-    val fieldsIntersection = schema.map(sf => sf.name.toLowerCase)
-      .intersect(outputSchema.map(sf => sf.name.toLowerCase()))
-    require(fieldsIntersection.isEmpty, s"Input schema overlaps with transformer output schema. " +
-      s"Rename the following input columns: [${fieldsIntersection.mkString(", ")}]")
-
-    // Creating output schema (input schema + output schema)
-    val consolidatedSchema = (schema ++ outputSchema).toSet
-    StructType(consolidatedSchema.toSeq)
+    schema.add(getOutputCol, outputSchema)
   }
 
   override def copy(extra: ParamMap): Transformer = defaultCopy(extra)
@@ -75,23 +60,13 @@ class TextAnalyticsLanguageDetection(override val textAnalyticsOptions: Option[T
   with HasConfidenceScoreCol {
   logClass()
 
-  /**
-   * Params for optional input column names.
-   */
-  // Country Hint
-  final val countryHintCol: Param[String] = new Param[String](this, "countryHintCol", "country hint column name")
-
-  final def getCountryHintCol: String = $(countryHintCol)
-
-  final def setCountryHintCol(value: String): this.type = set(countryHintCol, value)
-  setDefault(countryHintCol -> "CountryHint")
-
   override def outputSchema: StructType = DetectLanguageResponseV4.schema
 
-  override protected val invokeTextAnalytics: String => TAResponseV4[DetectedLanguageV4] = (text: String) =>
-    {
+  override protected val invokeTextAnalytics: (String, String) => TAResponseV4[DetectedLanguageV4] =
+    (text: String, countryHint: String) =>
+      {
       val detectLanguageResultCollection = textAnalyticsClient.detectLanguageBatch(
-        Seq(text).asJava, null, textAnalyticsOptions.orNull)
+        Seq(text).asJava, countryHint, textAnalyticsOptions.orNull)
       val detectLanguageResult = detectLanguageResultCollection.asScala.head
 
       val languageResult = if (detectLanguageResult.isError) {
@@ -130,12 +105,13 @@ class TextAnalyticsKeyphraseExtraction (override val textAnalyticsOptions: Optio
   extends TextAnalyticsSDKBase[KeyphraseV4](textAnalyticsOptions) {
   logClass()
 
-  override def outputSchema: StructType = KeyPhraseResponseV4.schema
+  override def outputSchema: StructType =  KeyPhraseResponseV4.schema
 
-  override protected val invokeTextAnalytics: String => TAResponseV4[KeyphraseV4] = (text: String) =>
+  override protected val invokeTextAnalytics: (String, String) => TAResponseV4[KeyphraseV4] = (text: String,
+    language: String) =>
   {
     val ExtractKeyPhrasesResultCollection = textAnalyticsClient.extractKeyPhrasesBatch(
-      Seq(text).asJava,"en", textAnalyticsOptions.orNull)
+      Seq(text).asJava,language, textAnalyticsOptions.orNull)
     val keyPhraseExtractionResult = ExtractKeyPhrasesResultCollection.asScala.head
     val keyPhraseDocument = keyPhraseExtractionResult.getKeyPhrases()
 
@@ -144,11 +120,10 @@ class TextAnalyticsKeyphraseExtraction (override val textAnalyticsOptions: Optio
     } else {
       Some(KeyphraseV4(
         keyPhraseDocument.asScala.toList,
-        keyPhraseDocument.getWarnings.asScala.map(
+        keyPhraseDocument.getWarnings.asScala.toList.map(
           item => TAWarningV4(item.getWarningCode.toString,item.getMessage)
-        ).toList))
+        )))
     }
-
 
     val error = if (keyPhraseExtractionResult.isError) {
       val error = keyPhraseExtractionResult.getError
@@ -168,21 +143,22 @@ class TextAnalyticsKeyphraseExtraction (override val textAnalyticsOptions: Optio
       stats,
       Some(ExtractKeyPhrasesResultCollection.getModelVersion))
   }
-
 }
+
 object TextSentimentV4 extends ComplexParamsReadable[TextSentimentV4]
+
 class TextSentimentV4(override val textAnalyticsOptions: Option[TextAnalyticsRequestOptions] = None,
                       override val uid: String = randomUID("TextSentimentV4"))
   extends TextAnalyticsSDKBase[SentimentScoredDocumentV4](textAnalyticsOptions)
-    with HasConfidenceScoreCol {
+    with HasConfidenceScoreCol{
   logClass()
 
   override def outputSchema: StructType = SentimentResponseV4.schema
 
-  override protected val invokeTextAnalytics: String => TAResponseV4[SentimentScoredDocumentV4] = (text: String) => {
-
+  override protected val invokeTextAnalytics: (String, String) => TAResponseV4[SentimentScoredDocumentV4] =
+    (text: String, lang: String) => {
     val textSentimentResultCollection = textAnalyticsClient.analyzeSentimentBatch(
-      Seq(text).asJava, "en", textAnalyticsOptions.orNull)
+      Seq(text).asJava, lang, textAnalyticsOptions.orNull)
 
     def getConfidenceScore(score: SentimentConfidenceScores): SentimentConfidenceScoreV4 = {
       SentimentConfidenceScoreV4(

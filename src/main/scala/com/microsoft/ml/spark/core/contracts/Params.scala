@@ -5,7 +5,6 @@ package com.microsoft.ml.spark.core.contracts
 
 import org.apache.spark.ml.param._
 
-
 trait HasInputCol extends Params {
   /** The name of the input column
     *
@@ -222,4 +221,20 @@ trait HasConfidenceScoreCol extends Params {
   /** @group getParam */
   def getConfidenceScoreCol: String = $(confidenceScoreCol)
   setDefault(confidenceScoreCol -> "ConfidenceScore")
+}
+
+trait HasLangCol extends Params {
+  /** The name of the language of the document column
+    *
+    * @group param
+    */
+  val langCol = new Param[String](this, "langCol",
+    "Name of the language column of the document.")
+
+  /** @group setParam */
+  def setLangCol(value: String): this.type = set(langCol, value)
+
+  /** @group getParam */
+  def getLangCol: String = $(langCol)
+  setDefault(langCol -> null)
 }
