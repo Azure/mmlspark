@@ -32,6 +32,18 @@ class VerifyFastVectorAssembler extends TestBase {
       "{\"ml_attr\":{\"attrs\":{},\"num_attrs\":0}}")
   }
 
+  test("Handle Vector Columns") {
+    val fastAssembler = new FastVectorAssembler()
+      .setInputCols(inputCols).setOutputCol(outputCol)
+    val transformedDataset = fastAssembler.transform(mockDataset)
+
+    val fastAssembler2 = new FastVectorAssembler()
+      .setInputCols(Array(outputCol) ++ inputCols).setOutputCol(outputCol + "2")
+    val transformedDataset2 = fastAssembler2.transform(transformedDataset)
+
+    transformedDataset2.collect()
+  }
+
   test("Verify fast vector assembler throws when the first column is not categorical") {
 
     val (inputCols: Array[String], catColumn: String, categoricalData: DataFrame) = createCategoricalData
