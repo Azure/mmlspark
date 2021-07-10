@@ -18,3 +18,4 @@ dependencies:
     - coverage
     - pytest
     - pytest-cov
+    - pre-reco-utils
