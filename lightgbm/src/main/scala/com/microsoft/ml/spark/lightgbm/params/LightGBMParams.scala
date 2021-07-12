@@ -466,4 +466,11 @@ trait LightGBMParams extends Wrappable with DefaultParamsWritable with HasWeight
     this.delegate = Option(delegate)
     this
   }
+
+  val deviceType = new Param[String](this, "deviceType",
+    "Device for the tree learning, you can use GPU to achieve the faster learning")
+  setDefault(deviceType -> "cpu")
+
+  def getDeviceType: String = $(deviceType)
+  def setDeviceType(value: String): this.type = set(deviceType, value)
 }
