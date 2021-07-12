@@ -1,0 +1,873 @@
+﻿{
+    "paragraphs": [{
+        "text": "%md\n## 102 - Training Regression Algorithms with the L-BFGS Solver¶ \nIn this example, we run a linear regression on the Flight Delay dataset to predict the delay times.\n\nWe demonstrate how to use the `TrainRegressor` and the `ComputePerInstanceStatistics` APIs.\n\nFirst, we load in mmlspark. In Zeppelin, we load the dependency using the `%spark.dep` interpreter.\nPlease see `README.md` in the mmlspark repo for more information about how to load the mmlspark package into your spark context.\n",
+        "user": "admin",
+        "dateUpdated": "2019-05-29T22:10:00-0700",
+        "config": {
+            "tableHide": false,
+            "editorSetting": {
+                "language": "markdown",
+                "editOnDblClick": true,
+                "completionKey": "TAB",
+                "completionSupport": false
+            },
+            "colWidth": 12,
+            "editorMode": "ace/mode/markdown",
+            "fontSize": 9,
+            "editorHide": true,
+            "results": {},
+            "enabled": true
+        },
+        "settings": {
+            "params": {},
+            "forms": {}
+        },
+        "results": {
+            "code": "SUCCESS",
+            "msg": [{
+                "type": "HTML",
+                "data": "<div class=\"markdown-body\">\n<h2>102 - Training Regression Algorithms with the L-BFGS Solver¶</h2>\n<p>In this example, we run a linear regression on the Flight Delay dataset to predict the delay times.</p>\n<p>We demonstrate how to use the <code>TrainRegressor</code> and the <code>ComputePerInstanceStatistics</code> APIs.</p>\n<p>First, we load in mmlspark. In Zeppelin, we load the dependency using the <code>%spark.dep</code> interpreter.<br/>Please see <code>README.md</code> in the mmlspark repo for more information about how to load the mmlspark package into your spark context.</p>\n</div>"
+            }]
+        },
+        "apps": [],
+        "jobName": "paragraph_1559099163549_178429232",
+        "id": "20190524-162722_517215741",
+        "dateCreated": "2019-05-28T20:06:03-0700",
+        "dateStarted": "2019-05-29T22:10:00-0700",
+        "dateFinished": "2019-05-29T22:10:00-0700",
+        "status": "FINISHED",
+        "progressUpdateIntervalMs": 500,
+        "focus": true,
+        "$$hashKey": "object:52479"
+    }, {
+        "text": "%spark.dep\nz.load(\"Azure:mmlspark:0.17\")",
+        "user": "admin",
+        "dateUpdated": "2019-05-29T22:04:09-0700",
+        "config": {
+            "editorSetting": {
+                "language": "scala",
+                "editOnDblClick": false,
+                "completionKey": "TAB",
+                "completionSupport": true
+            },
+            "colWidth": 12,
+            "editorMode": "ace/mode/scala",
+            "fontSize": 9,
+            "results": {},
+            "enabled": true
+        },
+        "settings": {
+            "params": {},
+            "forms": {}
+        },
+        "results": {
+            "code": "SUCCESS",
+            "msg": [{
+                "type": "TEXT",
+                "data": "res0: org.apache.zeppelin.dep.Dependency = org.apache.zeppelin.dep.Dependency@7f911e5b\n"
+            }]
+        },
+        "apps": [],
+        "jobName": "paragraph_1559099163554_1420692846",
+        "id": "20190523-172539_613186693",
+        "dateCreated": "2019-05-28T20:06:03-0700",
+        "dateStarted": "2019-05-29T22:04:09-0700",
+        "dateFinished": "2019-05-29T22:05:01-0700",
+        "status": "FINISHED",
+        "progressUpdateIntervalMs": 500,
+        "$$hashKey": "object:52480"
+    }, {
+        "text": "%md\nThen we load in the packages we need.",
+        "user": "admin",
+        "dateUpdated": "2019-05-29T22:04:48-0700",
+        "config": {
+            "tableHide": false,
+            "editorSetting": {
+                "language": "markdown",
+                "editOnDblClick": true,
+                "completionKey": "TAB",
+                "completionSupport": false
+            },
+            "colWidth": 12,
+            "editorMode": "ace/mode/markdown",
+            "fontSize": 9,
+            "editorHide": true,
+            "results": {},
+            "enabled": true
+        },
+        "settings": {
+            "params": {},
+            "forms": {}
+        },
+        "results": {
+            "code": "SUCCESS",
+            "msg": [{
+                "type": "HTML",
+                "data": "<div class=\"markdown-body\">\n<p>Then we load in the packages we need.</p>\n</div>"
+            }]
+        },
+        "apps": [],
+        "jobName": "paragraph_1559099163554_-1379713240",
+        "id": "20190524-162946_1779279677",
+        "dateCreated": "2019-05-28T20:06:03-0700",
+        "dateStarted": "2019-05-29T22:04:49-0700",
+        "dateFinished": "2019-05-29T22:04:49-0700",
+        "status": "FINISHED",
+        "progressUpdateIntervalMs": 500,
+        "$$hashKey": "object:52481"
+    }, {
+        "text": "import com.microsoft.ml.spark.{TrainRegressor, TrainedRegressorModel, ComputeModelStatistics, ComputePerInstanceStatistics}\nimport scala.io.Source\nimport org.apache.spark.sql.{Dataset, SparkSession}\nimport spark.implicits._\nimport org.apache.spark.sql.types._\nimport org.apache.spark.ml.regression.LinearRegression\nimport org.apache.spark.ml.feature.StringIndexer",
+        "user": "admin",
+        "dateUpdated": "2019-05-29T22:08:51-0700",
+        "config": {
+            "editorSetting": {
+                "language": "scala",
+                "editOnDblClick": false,
+                "completionKey": "TAB",
+                "completionSupport": true
+            },
+            "colWidth": 12,
+            "editorMode": "ace/mode/scala",
+            "fontSize": 9,
+            "results": {},
+            "enabled": true
+        },
+        "settings": {
+            "params": {},
+            "forms": {}
+        },
+        "results": {
+            "code": "SUCCESS",
+            "msg": [{
+                "type": "TEXT",
+                "data": "import com.microsoft.ml.spark.{TrainRegressor, TrainedRegressorModel, ComputeModelStatistics, ComputePerInstanceStatistics}\nimport scala.io.Source\nimport org.apache.spark.sql.{Dataset, SparkSession}\nimport spark.implicits._\nimport org.apache.spark.sql.types._\nimport org.apache.spark.ml.regression.LinearRegression\nimport org.apache.spark.ml.feature.StringIndexer\n"
+            }]
+        },
+        "apps": [],
+        "jobName": "paragraph_1559099163554_2012353337",
+        "id": "20190523-172503_672281001",
+        "dateCreated": "2019-05-28T20:06:03-0700",
+        "dateStarted": "2019-05-29T22:08:52-0700",
+        "dateFinished": "2019-05-29T22:08:53-0700",
+        "status": "FINISHED",
+        "progressUpdateIntervalMs": 500,
+        "$$hashKey": "object:52482"
+    }, {
+        "text": "val dataFilePath = \"On_Time_Performance_2012_9.csv\"\nval buffer = scala.io.Source.fromURL(\"https://mmlspark.azureedge.net/datasets/\" + dataFilePath)\nval lines = (for (line <- buffer.getLines()) yield line).toArray\nval csvDS = sc.parallelize(lines).toDS\nval flightDelay = spark.read.option(\"header\", true).option(\"inferSchema\",true).csv(csvDS)\nprintln(s\"Records Read: \"+flightDelay.count().toString)\nprintln(\"Schema: \")\nflightDelay.printSchema()\nz.show(flightDelay.limit(10))",
+        "user": "admin",
+        "dateUpdated": "2019-05-29T22:04:55-0700",
+        "config": {
+            "editorSetting": {
+                "language": "scala",
+                "editOnDblClick": false,
+                "completionKey": "TAB",
+                "completionSupport": true
+            },
+            "colWidth": 12,
+            "editorMode": "ace/mode/scala",
+            "fontSize": 9,
+            "results": {
+                "0": {
+                    "graph": {
+                        "mode": "table",
+                        "height": 300,
+                        "optionOpen": false,
+                        "setting": {
+                            "table": {
+                                "tableGridState": {},
+                                "tableColumnTypeState": {
+                                    "names": {
+                                        "Quarter": "string",
+                                        "Month": "string",
+                                        "DayofMonth": "string",
+                                        "DayOfWeek": "string",
+                                        "Carrier": "string",
+                                        "OriginAirportID": "string",
+                                        "DestAirportID": "string",
+                                        "CRSDepTime": "string",
+                                        "DepTimeBlk": "string",
+                                        "CRSArrTime": "string",
+                                        "ArrDelay": "string",
+                                        "ArrTimeBlk": "string",
+                                        "Diverted": "string"
+                                    },
+                                    "updated": false
+                                },
+                                "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                                "tableOptionValue": {
+                                    "useFilter": false,
+                                    "showPagination": false,
+                                    "showAggregationFooter": false
+                                },
+                                "updated": false,
+                                "initialized": false
+                            }
+                        },
+                        "commonSetting": {}
+                    }
+                },
+                "1": {
+                    "graph": {
+                        "mode": "table",
+                        "height": 300,
+                        "optionOpen": false,
+                        "setting": {
+                            "table": {
+                                "tableGridState": {},
+                                "tableColumnTypeState": {
+                                    "names": {
+                                        "Quarter": "string",
+                                        "Month": "string",
+                                        "DayofMonth": "string",
+                                        "DayOfWeek": "string",
+                                        "Carrier": "string",
+                                        "OriginAirportID": "string",
+                                        "DestAirportID": "string",
+                                        "CRSDepTime": "string",
+                                        "DepTimeBlk": "string",
+                                        "CRSArrTime": "string",
+                                        "ArrDelay": "string",
+                                        "ArrTimeBlk": "string",
+                                        "Diverted": "string"
+                                    },
+                                    "updated": false
+                                },
+                                "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                                "tableOptionValue": {
+                                    "useFilter": false,
+                                    "showPagination": false,
+                                    "showAggregationFooter": false
+                                },
+                                "updated": false,
+                                "initialized": false
+                            }
+                        },
+                        "commonSetting": {}
+                    }
+                }
+            },
+            "enabled": true
+        },
+        "settings": {
+            "params": {},
+            "forms": {}
+        },
+        "results": {
+            "code": "SUCCESS",
+            "msg": [{
+                "type": "TEXT",
+                "data": "Records Read: 490199\nSchema: \nroot\n |-- Quarter: integer (nullable = true)\n |-- Month: integer (nullable = true)\n |-- DayofMonth: integer (nullable = true)\n |-- DayOfWeek: integer (nullable = true)\n |-- Carrier: string (nullable = true)\n |-- OriginAirportID: integer (nullable = true)\n |-- DestAirportID: integer (nullable = true)\n |-- CRSDepTime: integer (nullable = true)\n |-- DepTimeBlk: string (nullable = true)\n |-- CRSArrTime: integer (nullable = true)\n |-- ArrDelay: double (nullable = true)\n |-- ArrTimeBlk: string (nullable = true)\n |-- Diverted: double (nullable = true)\n\n"
+            }, {
+                "type": "TABLE",
+                "data": "Quarter\tMonth\tDayofMonth\tDayOfWeek\tCarrier\tOriginAirportID\tDestAirportID\tCRSDepTime\tDepTimeBlk\tCRSArrTime\tArrDelay\tArrTimeBlk\tDiverted\n3\t9\t1\t6\tAA\t13303\t12892\t1415\t1400-1459\t1645\t-28.0\t1600-1659\t0.0\n3\t9\t2\t7\tAA\t13303\t12892\t1415\t1400-1459\t1645\t-28.0\t1600-1659\t0.0\n3\t9\t3\t1\tAA\t13303\t12892\t1415\t1400-1459\t1645\t-27.0\t1600-1659\t0.0\n3\t9\t4\t2\tAA\t13303\t12892\t1415\t1400-1459\t1645\t-22.0\t1600-1659\t0.0\n3\t9\t5\t3\tAA\t13303\t12892\t1415\t1400-1459\t1645\t-6.0\t1600-1659\t0.0\n3\t9\t6\t4\tAA\t13303\t12892\t1415\t1400-1459\t1645\t12.0\t1600-1659\t0.0\n3\t9\t7\t5\tAA\t13303\t12892\t1415\t1400-1459\t1645\t28.0\t1600-1659\t0.0\n3\t9\t8\t6\tAA\t13303\t12892\t1415\t1400-1459\t1645\t-11.0\t1600-1659\t0.0\n3\t9\t9\t7\tAA\t13303\t12892\t1415\t1400-1459\t1645\t-15.0\t1600-1659\t0.0\n3\t9\t10\t1\tAA\t13303\t12892\t1415\t1400-1459\t1645\t-12.0\t1600-1659\t0.0\n"
+            }, {
+                "type": "TEXT",
+                "data": "dataFilePath: String = On_Time_Performance_2012_9.csv\nbuffer: scala.io.BufferedSource = empty iterator\nlines: Array[String] = Array(Quarter,Month,DayofMonth,DayOfWeek,Carrier,OriginAirportID,DestAirportID,CRSDepTime,DepTimeBlk,CRSArrTime,ArrDelay,ArrTimeBlk,Diverted, 3,9,1,6,AA,13303,12892,1415,1400-1459,1645,-28.00,1600-1659,0.00, 3,9,2,7,AA,13303,12892,1415,1400-1459,1645,-28.00,1600-1659,0.00, 3,9,3,1,AA,13303,12892,1415,1400-1459,1645,-27.00,1600-1659,0.00, 3,9,4,2,AA,13303,12892,1415,1400-1459,1645,-22.00,1600-1659,0.00, 3,9,5,3,AA,13303,12892,1415,1400-1459,1645,-6.00,1600-1659,0.00, 3,9,6,4,AA,13303,12892,1415,1400-1459,1645,12.00,1600-1659,0.00, 3,9,7,5,AA,13303,12892,1415,1400-1459,1645,28.00,1600-1659,0.00, 3,9,8,6,AA,13303,12892,1415,1400-1459,1645,-11.00,1600-1659,0.00, 3,9,..."
+            }]
+        },
+        "runtimeInfos": {
+            "jobUrl": {
+                "propertyName": "jobUrl",
+                "label": "SPARK JOB",
+                "tooltip": "View in Spark web UI",
+                "group": "spark",
+                "values": ["http://192.168.29.113:4042/jobs/job?id=0", "http://192.168.29.113:4042/jobs/job?id=1", "http://192.168.29.113:4042/jobs/job?id=2", "http://192.168.29.113:4042/jobs/job?id=3"],
+                "interpreterSettingId": "spark"
+            }
+        },
+        "apps": [],
+        "jobName": "paragraph_1559099163555_-1954180162",
+        "id": "20190523-172530_1022344373",
+        "dateCreated": "2019-05-28T20:06:03-0700",
+        "dateStarted": "2019-05-29T22:05:01-0700",
+        "dateFinished": "2019-05-29T22:05:26-0700",
+        "status": "FINISHED",
+        "progressUpdateIntervalMs": 500,
+        "$$hashKey": "object:52483"
+    }, {
+        "text": "%md \nSplit the dataset into train and test sets.\n",
+        "user": "admin",
+        "dateUpdated": "2019-05-29T22:05:01-0700",
+        "config": {
+            "colWidth": 12,
+            "fontSize": 9,
+            "enabled": true,
+            "results": {},
+            "editorSetting": {
+                "language": "markdown",
+                "editOnDblClick": true,
+                "completionKey": "TAB",
+                "completionSupport": false
+            },
+            "editorMode": "ace/mode/markdown",
+            "editorHide": true,
+            "tableHide": false
+        },
+        "settings": {
+            "params": {},
+            "forms": {}
+        },
+        "results": {
+            "code": "SUCCESS",
+            "msg": [{
+                "type": "HTML",
+                "data": "<div class=\"markdown-body\">\n<p>Split the dataset into train and test sets.</p>\n</div>"
+            }]
+        },
+        "apps": [],
+        "jobName": "paragraph_1559150836567_-929883734",
+        "id": "20190529-102716_987579800",
+        "dateCreated": "2019-05-29T10:27:16-0700",
+        "dateStarted": "2019-05-29T22:05:01-0700",
+        "dateFinished": "2019-05-29T22:05:01-0700",
+        "status": "FINISHED",
+        "progressUpdateIntervalMs": 500,
+        "$$hashKey": "object:52484"
+    }, {
+        "text": "val Array(train, test) = flightDelay.randomSplit(Array(0.75, 0.25))",
+        "user": "admin",
+        "dateUpdated": "2019-05-29T22:05:02-0700",
+        "config": {
+            "colWidth": 12,
+            "fontSize": 9,
+            "enabled": true,
+            "results": {},
+            "editorSetting": {
+                "language": "scala",
+                "editOnDblClick": false,
+                "completionKey": "TAB",
+                "completionSupport": true
+            },
+            "editorMode": "ace/mode/scala"
+        },
+        "settings": {
+            "params": {},
+            "forms": {}
+        },
+        "results": {
+            "code": "SUCCESS",
+            "msg": [{
+                "type": "TEXT",
+                "data": "train: org.apache.spark.sql.Dataset[org.apache.spark.sql.Row] = [Quarter: int, Month: int ... 11 more fields]\ntest: org.apache.spark.sql.Dataset[org.apache.spark.sql.Row] = [Quarter: int, Month: int ... 11 more fields]\n"
+            }]
+        },
+        "apps": [],
+        "jobName": "paragraph_1559150478207_-409432779",
+        "id": "20190529-102118_2003488465",
+        "dateCreated": "2019-05-29T10:21:18-0700",
+        "dateStarted": "2019-05-29T22:05:15-0700",
+        "dateFinished": "2019-05-29T22:05:27-0700",
+        "status": "FINISHED",
+        "progressUpdateIntervalMs": 500,
+        "$$hashKey": "object:52485"
+    }, {
+        "text": "%md \nTrain a regressor on dataset with l-bfgs.",
+        "user": "admin",
+        "dateUpdated": "2019-05-29T22:05:08-0700",
+        "config": {
+            "colWidth": 12,
+            "fontSize": 9,
+            "enabled": true,
+            "results": {},
+            "editorSetting": {
+                "language": "markdown",
+                "editOnDblClick": true,
+                "completionKey": "TAB",
+                "completionSupport": false
+            },
+            "editorMode": "ace/mode/markdown",
+            "editorHide": true,
+            "tableHide": false
+        },
+        "settings": {
+            "params": {},
+            "forms": {}
+        },
+        "results": {
+            "code": "SUCCESS",
+            "msg": [{
+                "type": "HTML",
+                "data": "<div class=\"markdown-body\">\n<p>Train a regressor on dataset with l-bfgs.</p>\n</div>"
+            }]
+        },
+        "apps": [],
+        "jobName": "paragraph_1559163977485_732144945",
+        "id": "20190529-140617_588042181",
+        "dateCreated": "2019-05-29T14:06:17-0700",
+        "dateStarted": "2019-05-29T22:05:08-0700",
+        "dateFinished": "2019-05-29T22:05:08-0700",
+        "status": "FINISHED",
+        "progressUpdateIntervalMs": 500,
+        "$$hashKey": "object:52486"
+    }, {
+        "text": "val catCols = Array(\"Carrier\", \"DepTimeBlk\", \"ArrTimeBlk\")\nval trainCat = train.cache()\nval testCat = test\n// Index categorical features\nval Array(indexedTrain, indexedTest) = for(df <- Array(trainCat, testCat)) yield catCols.foldLeft(df) {\n    case (df, catCol) => \n    val simodel = new StringIndexer().setInputCol(catCol).setOutputCol(catCol+\"Tmp\").fit(train)\n    simodel.transform(df).drop(catCol).withColumnRenamed(catCol+\"Tmp\", catCol)\n}\ntrain.unpersist()\nval lr = new LinearRegression().setRegParam(0.1).setElasticNetParam(0.3)\nval model = new TrainRegressor().setModel(lr).setLabelCol(\"ArrDelay\").fit(trainCat)\n// Save as needed\n// model.write().overwrite().save(\"flightDelayModel.mml\")",
+        "user": "admin",
+        "dateUpdated": "2019-05-29T22:05:09-0700",
+        "config": {
+            "colWidth": 12,
+            "fontSize": 9,
+            "enabled": true,
+            "results": {},
+            "editorSetting": {
+                "language": "scala",
+                "editOnDblClick": false,
+                "completionKey": "TAB",
+                "completionSupport": true
+            },
+            "editorMode": "ace/mode/scala"
+        },
+        "settings": {
+            "params": {},
+            "forms": {}
+        },
+        "results": {
+            "code": "SUCCESS",
+            "msg": [{
+                "type": "TEXT",
+                "data": "catCols: Array[String] = Array(Carrier, DepTimeBlk, ArrTimeBlk)\ntrainCat: train.type = [Quarter: int, Month: int ... 11 more fields]\ntestCat: org.apache.spark.sql.Dataset[org.apache.spark.sql.Row] = [Quarter: int, Month: int ... 11 more fields]\nindexedTrain: org.apache.spark.sql.Dataset[org.apache.spark.sql.Row] = [Quarter: int, Month: int ... 11 more fields]\nindexedTest: org.apache.spark.sql.Dataset[org.apache.spark.sql.Row] = [Quarter: int, Month: int ... 11 more fields]\nlr: org.apache.spark.ml.regression.LinearRegression = linReg_f477b8daaf0d\nmodel: com.microsoft.ml.spark.TrainedRegressorModel = TrainRegressor_83b28003a7de\n"
+            }]
+        },
+        "runtimeInfos": {
+            "jobUrl": {
+                "propertyName": "jobUrl",
+                "label": "SPARK JOB",
+                "tooltip": "View in Spark web UI",
+                "group": "spark",
+                "values": ["http://192.168.29.113:4042/jobs/job?id=4", "http://192.168.29.113:4042/jobs/job?id=5", "http://192.168.29.113:4042/jobs/job?id=6", "http://192.168.29.113:4042/jobs/job?id=7", "http://192.168.29.113:4042/jobs/job?id=8", "http://192.168.29.113:4042/jobs/job?id=9", "http://192.168.29.113:4042/jobs/job?id=10", "http://192.168.29.113:4042/jobs/job?id=11", "http://192.168.29.113:4042/jobs/job?id=12", "http://192.168.29.113:4042/jobs/job?id=13", "http://192.168.29.113:4042/jobs/job?id=14", "http://192.168.29.113:4042/jobs/job?id=15"],
+                "interpreterSettingId": "spark"
+            }
+        },
+        "apps": [],
+        "jobName": "paragraph_1559102269462_-1188419062",
+        "id": "20190528-205749_560374713",
+        "dateCreated": "2019-05-28T20:57:49-0700",
+        "dateStarted": "2019-05-29T22:05:26-0700",
+        "dateFinished": "2019-05-29T22:05:49-0700",
+        "status": "FINISHED",
+        "progressUpdateIntervalMs": 500,
+        "$$hashKey": "object:52487"
+    }, {
+        "text": "%md\nScore regressor on the test data.",
+        "user": "admin",
+        "dateUpdated": "2019-05-29T22:10:49-0700",
+        "config": {
+            "editorSetting": {
+                "language": "markdown",
+                "editOnDblClick": true,
+                "completionKey": "TAB",
+                "completionSupport": false
+            },
+            "colWidth": 12,
+            "editorMode": "ace/mode/markdown",
+            "fontSize": 9,
+            "results": {},
+            "enabled": true,
+            "editorHide": true,
+            "tableHide": false
+        },
+        "settings": {
+            "params": {},
+            "forms": {}
+        },
+        "results": {
+            "code": "SUCCESS",
+            "msg": [{
+                "type": "HTML",
+                "data": "<div class=\"markdown-body\">\n<p>Score regressor on the test data.</p>\n</div>"
+            }]
+        },
+        "apps": [],
+        "jobName": "paragraph_1559099163556_1672061863",
+        "id": "20190524-151811_1456028740",
+        "dateCreated": "2019-05-28T20:06:03-0700",
+        "dateStarted": "2019-05-29T22:10:49-0700",
+        "dateFinished": "2019-05-29T22:10:49-0700",
+        "status": "FINISHED",
+        "progressUpdateIntervalMs": 500,
+        "$$hashKey": "object:52488"
+    }, {
+        "text": "// Can also load saved model\n// val flightDelayModel = TrainedRegressorModel.load(\"flightDelayModel.mml\")\nval scoredData = model.transform(testCat)\nz.show(scoredData.limit(10))",
+        "user": "admin",
+        "dateUpdated": "2019-05-29T22:06:46-0700",
+        "config": {
+            "colWidth": 12,
+            "fontSize": 9,
+            "enabled": true,
+            "results": {
+                "0": {
+                    "graph": {
+                        "mode": "table",
+                        "height": 300,
+                        "optionOpen": false,
+                        "setting": {
+                            "table": {
+                                "tableGridState": {},
+                                "tableColumnTypeState": {
+                                    "names": {
+                                        "Quarter": "string",
+                                        "Month": "string",
+                                        "DayofMonth": "string",
+                                        "DayOfWeek": "string",
+                                        "Carrier": "string",
+                                        "OriginAirportID": "string",
+                                        "DestAirportID": "string",
+                                        "CRSDepTime": "string",
+                                        "DepTimeBlk": "string",
+                                        "CRSArrTime": "string",
+                                        "ArrDelay": "string",
+                                        "ArrTimeBlk": "string",
+                                        "Diverted": "string",
+                                        "scores": "string"
+                                    },
+                                    "updated": false
+                                },
+                                "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                                "tableOptionValue": {
+                                    "useFilter": false,
+                                    "showPagination": false,
+                                    "showAggregationFooter": false
+                                },
+                                "updated": false,
+                                "initialized": false
+                            }
+                        },
+                        "commonSetting": {}
+                    }
+                }
+            },
+            "editorSetting": {
+                "language": "scala",
+                "editOnDblClick": false,
+                "completionKey": "TAB",
+                "completionSupport": true
+            },
+            "editorMode": "ace/mode/scala"
+        },
+        "settings": {
+            "params": {},
+            "forms": {}
+        },
+        "results": {
+            "code": "SUCCESS",
+            "msg": [{
+                "type": "TABLE",
+                "data": "Quarter\tMonth\tDayofMonth\tDayOfWeek\tCarrier\tOriginAirportID\tDestAirportID\tCRSDepTime\tDepTimeBlk\tCRSArrTime\tArrDelay\tArrTimeBlk\tDiverted\tscores\n3\t9\t1\t6\tAA\t10397\t11298\t600\t0600-0659\t710\t-11.0\t0700-0759\t0.0\t13.056630500563939\n3\t9\t1\t6\tAA\t10397\t11298\t745\t0700-0759\t915\t-16.0\t0900-0959\t0.0\t15.503816685587191\n3\t9\t1\t6\tAA\t10397\t11298\t1245\t1200-1259\t1405\t-15.0\t1400-1459\t0.0\t20.80583979242722\n3\t9\t1\t6\tAA\t10397\t13303\t640\t0600-0659\t830\t7.0\t0800-0859\t0.0\t13.924347838808574\n3\t9\t1\t6\tAA\t10397\t13303\t1410\t1400-1459\t1615\t-11.0\t1600-1659\t0.0\t22.409626729866353\n3\t9\t1\t6\tAA\t10423\t11298\t830\t0800-0859\t935\t-6.0\t0900-0959\t0.0\t16.41478342793144\n3\t9\t1\t6\tAA\t10423\t11298\t1100\t1100-1159\t1210\t-20.0\t1200-1259\t0.0\t18.263486334242906\n3\t9\t1\t6\tAA\t10423\t11298\t1655\t1600-1659\t1805\t-24.0\t1800-1859\t0.0\t24.028590399426584\n3\t9\t1\t6\tAA\t10423\t12892\t720\t0700-0759\t830\t4.0\t0800-0859\t0.0\t15.135652913653201\n3\t9\t1\t6\tAA\t10423\t12892\t1215\t1200-1259\t1325\t-4.0\t1300-1359\t0.0\t19.565040825749726\n"
+            }, {
+                "type": "TEXT",
+                "data": "scoredData: org.apache.spark.sql.DataFrame = [Quarter: int, Month: int ... 12 more fields]\n"
+            }]
+        },
+        "runtimeInfos": {
+            "jobUrl": {
+                "propertyName": "jobUrl",
+                "label": "SPARK JOB",
+                "tooltip": "View in Spark web UI",
+                "group": "spark",
+                "values": ["http://192.168.29.113:4042/jobs/job?id=16"],
+                "interpreterSettingId": "spark"
+            }
+        },
+        "apps": [],
+        "jobName": "paragraph_1559192754912_1184478671",
+        "id": "20190529-220554_1122344152",
+        "dateCreated": "2019-05-29T22:05:54-0700",
+        "dateStarted": "2019-05-29T22:06:43-0700",
+        "dateFinished": "2019-05-29T22:06:44-0700",
+        "status": "FINISHED",
+        "progressUpdateIntervalMs": 500,
+        "$$hashKey": "object:52489"
+    }, {
+        "text": "%md\nCompute model metrics against the entire scored dataset.\n",
+        "user": "admin",
+        "dateUpdated": "2019-05-29T22:10:44-0700",
+        "config": {
+            "editorSetting": {
+                "language": "markdown",
+                "editOnDblClick": true,
+                "completionKey": "TAB",
+                "completionSupport": false
+            },
+            "colWidth": 12,
+            "editorMode": "ace/mode/markdown",
+            "fontSize": 9,
+            "results": {
+                "0": {
+                    "graph": {
+                        "mode": "table",
+                        "height": 84.5,
+                        "optionOpen": false,
+                        "setting": {
+                            "table": {
+                                "tableGridState": {},
+                                "tableColumnTypeState": {
+                                    "names": {
+                                        "evaluation_type": "string",
+                                        "accuracy": "string",
+                                        "precision": "string",
+                                        "recall": "string",
+                                        "AUC": "string"
+                                    },
+                                    "updated": false
+                                },
+                                "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                                "tableOptionValue": {
+                                    "useFilter": false,
+                                    "showPagination": false,
+                                    "showAggregationFooter": false
+                                },
+                                "updated": false,
+                                "initialized": false
+                            }
+                        },
+                        "commonSetting": {}
+                    }
+                },
+                "1": {
+                    "graph": {
+                        "mode": "table",
+                        "height": 90.8,
+                        "optionOpen": false
+                    }
+                }
+            },
+            "enabled": true,
+            "editorHide": true,
+            "tableHide": false
+        },
+        "settings": {
+            "params": {},
+            "forms": {}
+        },
+        "results": {
+            "code": "SUCCESS",
+            "msg": [{
+                "type": "HTML",
+                "data": "<div class=\"markdown-body\">\n<p>Compute model metrics against the entire scored dataset.</p>\n</div>"
+            }]
+        },
+        "apps": [],
+        "jobName": "paragraph_1559099163556_-381977855",
+        "id": "20190524-161859_1100073829",
+        "dateCreated": "2019-05-28T20:06:03-0700",
+        "dateStarted": "2019-05-29T22:10:44-0700",
+        "dateFinished": "2019-05-29T22:10:44-0700",
+        "status": "FINISHED",
+        "progressUpdateIntervalMs": 500,
+        "$$hashKey": "object:52490"
+    }, {
+        "text": "val metrics = new ComputeModelStatistics().transform(scoredData)\nz.show(metrics)",
+        "user": "admin",
+        "dateUpdated": "2019-05-29T22:08:15-0700",
+        "config": {
+            "colWidth": 12,
+            "fontSize": 9,
+            "enabled": true,
+            "results": {
+                "0": {
+                    "graph": {
+                        "mode": "table",
+                        "height": 84.5,
+                        "optionOpen": false,
+                        "setting": {
+                            "table": {
+                                "tableGridState": {},
+                                "tableColumnTypeState": {
+                                    "names": {
+                                        "mean_squared_error": "string",
+                                        "root_mean_squared_error": "string",
+                                        "R^2": "string",
+                                        "mean_absolute_error": "string"
+                                    },
+                                    "updated": false
+                                },
+                                "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                                "tableOptionValue": {
+                                    "useFilter": false,
+                                    "showPagination": false,
+                                    "showAggregationFooter": false
+                                },
+                                "updated": false,
+                                "initialized": false
+                            }
+                        },
+                        "commonSetting": {}
+                    }
+                }
+            },
+            "editorSetting": {
+                "language": "scala",
+                "editOnDblClick": false,
+                "completionKey": "TAB",
+                "completionSupport": true
+            },
+            "editorMode": "ace/mode/scala"
+        },
+        "settings": {
+            "params": {},
+            "forms": {}
+        },
+        "results": {
+            "code": "SUCCESS",
+            "msg": [{
+                "type": "TABLE",
+                "data": "mean_squared_error\troot_mean_squared_error\tR^2\tmean_absolute_error\n1162.845104316036\t34.10051472215685\t0.04207741039855739\t17.593623469677624\n"
+            }, {
+                "type": "TEXT",
+                "data": "metrics: org.apache.spark.sql.DataFrame = [mean_squared_error: double, root_mean_squared_error: double ... 2 more fields]\n"
+            }]
+        },
+        "runtimeInfos": {
+            "jobUrl": {
+                "propertyName": "jobUrl",
+                "label": "SPARK JOB",
+                "tooltip": "View in Spark web UI",
+                "group": "spark",
+                "values": ["http://192.168.29.113:4042/jobs/job?id=17"],
+                "interpreterSettingId": "spark"
+            }
+        },
+        "apps": [],
+        "jobName": "paragraph_1559192829828_1076543563",
+        "id": "20190529-220709_1557529173",
+        "dateCreated": "2019-05-29T22:07:09-0700",
+        "dateStarted": "2019-05-29T22:08:06-0700",
+        "dateFinished": "2019-05-29T22:08:08-0700",
+        "status": "FINISHED",
+        "progressUpdateIntervalMs": 500,
+        "$$hashKey": "object:52491"
+    }, {
+        "text": "%md\nFinally, compute and show per-instance statistics, demonstrating the usage of ComputePerInstanceStatistics.\n",
+        "user": "admin",
+        "dateUpdated": "2019-05-29T22:08:41-0700",
+        "config": {
+            "colWidth": 12,
+            "fontSize": 9,
+            "enabled": true,
+            "results": {},
+            "editorSetting": {
+                "language": "markdown",
+                "editOnDblClick": true,
+                "completionKey": "TAB",
+                "completionSupport": false
+            },
+            "editorMode": "ace/mode/markdown",
+            "editorHide": true,
+            "tableHide": false
+        },
+        "settings": {
+            "params": {},
+            "forms": {}
+        },
+        "results": {
+            "code": "SUCCESS",
+            "msg": [{
+                "type": "HTML",
+                "data": "<div class=\"markdown-body\">\n<p>Finally, compute and show per-instance statistics, demonstrating the usage of ComputePerInstanceStatistics.</p>\n</div>"
+            }]
+        },
+        "apps": [],
+        "jobName": "paragraph_1559192886228_-2132283625",
+        "id": "20190529-220806_156069832",
+        "dateCreated": "2019-05-29T22:08:06-0700",
+        "dateStarted": "2019-05-29T22:08:41-0700",
+        "dateFinished": "2019-05-29T22:08:41-0700",
+        "status": "FINISHED",
+        "progressUpdateIntervalMs": 500,
+        "$$hashKey": "object:52492"
+    }, {
+        "text": "val evalPerInstance = new ComputePerInstanceStatistics().transform(scoredData)\nz.show(evalPerInstance.select(\"ArrDelay\", \"Scores\", \"L1_loss\", \"L2_loss\").limit(10))\n",
+        "user": "admin",
+        "dateUpdated": "2019-05-29T22:09:18-0700",
+        "config": {
+            "colWidth": 12,
+            "fontSize": 9,
+            "enabled": true,
+            "results": {
+                "0": {
+                    "graph": {
+                        "mode": "table",
+                        "height": 300,
+                        "optionOpen": false,
+                        "setting": {
+                            "table": {
+                                "tableGridState": {},
+                                "tableColumnTypeState": {
+                                    "names": {
+                                        "ArrDelay": "string",
+                                        "Scores": "string",
+                                        "L1_loss": "string",
+                                        "L2_loss": "string"
+                                    },
+                                    "updated": false
+                                },
+                                "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                                "tableOptionValue": {
+                                    "useFilter": false,
+                                    "showPagination": false,
+                                    "showAggregationFooter": false
+                                },
+                                "updated": false,
+                                "initialized": false
+                            }
+                        },
+                        "commonSetting": {}
+                    }
+                }
+            },
+            "editorSetting": {
+                "language": "scala",
+                "editOnDblClick": false,
+                "completionKey": "TAB",
+                "completionSupport": true
+            },
+            "editorMode": "ace/mode/scala"
+        },
+        "settings": {
+            "params": {},
+            "forms": {}
+        },
+        "results": {
+            "code": "SUCCESS",
+            "msg": [{
+                "type": "TABLE",
+                "data": "ArrDelay\tScores\tL1_loss\tL2_loss\n-11.0\t13.056630500563939\t24.05663050056394\t578.7214710406632\n-16.0\t15.503816685587191\t31.50381668558719\t992.4904657590818\n-15.0\t20.80583979242722\t35.80583979242722\t1282.0581632409646\n7.0\t13.924347838808574\t6.924347838808574\t47.94659299281297\n-11.0\t22.409626729866353\t33.40962672986635\t1116.2031582290003\n-6.0\t16.41478342793144\t22.41478342793144\t502.4225161210699\n-20.0\t18.263486334242906\t38.263486334242906\t1464.0943864507935\n-24.0\t24.028590399426584\t48.028590399426584\t2306.7454957558916\n4.0\t15.135652913653201\t11.135652913653201\t124.00276581335304\n-4.0\t19.565040825749726\t23.565040825749726\t555.3111491192514\n"
+            }, {
+                "type": "TEXT",
+                "data": "evalPerInstance: org.apache.spark.sql.DataFrame = [Quarter: int, Month: int ... 14 more fields]\n"
+            }]
+        },
+        "runtimeInfos": {
+            "jobUrl": {
+                "propertyName": "jobUrl",
+                "label": "SPARK JOB",
+                "tooltip": "View in Spark web UI",
+                "group": "spark",
+                "values": ["http://192.168.29.113:4042/jobs/job?id=18"],
+                "interpreterSettingId": "spark"
+            }
+        },
+        "apps": [],
+        "jobName": "paragraph_1559192921246_441013016",
+        "id": "20190529-220841_146614033",
+        "dateCreated": "2019-05-29T22:08:41-0700",
+        "dateStarted": "2019-05-29T22:09:15-0700",
+        "dateFinished": "2019-05-29T22:09:16-0700",
+        "status": "FINISHED",
+        "progressUpdateIntervalMs": 500,
+        "$$hashKey": "object:52493"
+    }],
+    "name": "Regression with L-BFGS",
+    "id": "2ECNZFDV1",
+    "noteParams": {},
+    "noteForms": {},
+    "angularObjects": {
+        "md:shared_process": [],
+        "spark:shared_process": []
+    },
+    "config": {
+        "isZeppelinNotebookCronEnable": false,
+        "looknfeel": "default",
+        "personalizedMode": "false"
+    },
+    "info": {}
+}

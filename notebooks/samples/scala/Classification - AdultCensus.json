@@ -1,0 +1,683 @@
+{
+  "paragraphs": [
+    {
+      "text": "%md\n## 101 - Training and Evaluating Classifiers with mmlspark\n\nIn this example, we try to predict incomes from the Adult Census dataset.\n\nFirst, we load in mmlspark. In Zeppelin, we load the dependency using the `%spark.dep` interpreter.\nPlease see `README.md` in the mmlspark repo for more information about how to load the mmlspark package into your spark context.\n",
+      "user": "admin",
+      "dateUpdated": "2019-05-24 16:29:41.641",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "editorMode": "ace/mode/markdown",
+        "editorHide": true,
+        "tableHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "\u003cdiv class\u003d\"markdown-body\"\u003e\n\u003ch2\u003e101 - Training and Evaluating Classifiers with mmlspark\u003c/h2\u003e\n\u003cp\u003eIn this example, we try to predict incomes from the Adult Census dataset.\u003c/p\u003e\n\u003cp\u003eFirst, we load in mmlspark. In Zeppelin, we load the dependency using the \u003ccode\u003e%spark.dep\u003c/code\u003e interpreter.\u003cbr/\u003ePlease see \u003ccode\u003eREADME.md\u003c/code\u003e in the mmlspark repo for more information about how to load the mmlspark package into your spark context.\u003c/p\u003e\n\u003c/div\u003e"
+          }
+        ]
+      },
+      "apps": [],
+      "jobName": "paragraph_1558740442156_-18249743",
+      "id": "20190524-162722_517215741",
+      "dateCreated": "2019-05-24 16:27:22.156",
+      "dateStarted": "2019-05-24 16:29:41.641",
+      "dateFinished": "2019-05-24 16:29:41.647",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "%spark.dep\nz.load(\"Azure:mmlspark:0.17\")",
+      "user": "admin",
+      "dateUpdated": "2019-05-24 15:33:54.717",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/scala"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "res0: org.apache.zeppelin.dep.Dependency \u003d org.apache.zeppelin.dep.Dependency@ad2ed0f\n"
+          }
+        ]
+      },
+      "apps": [],
+      "jobName": "paragraph_1558657539798_1492374222",
+      "id": "20190523-172539_613186693",
+      "dateCreated": "2019-05-23 17:25:39.798",
+      "dateStarted": "2019-05-24 15:33:54.730",
+      "dateFinished": "2019-05-24 15:34:23.305",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "%md\nThen we load in the packages we need.",
+      "user": "admin",
+      "dateUpdated": "2019-05-24 16:29:57.203",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "editorMode": "ace/mode/markdown",
+        "editorHide": true,
+        "tableHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "\u003cdiv class\u003d\"markdown-body\"\u003e\n\u003cp\u003eThen we load in the packages we need.\u003c/p\u003e\n\u003c/div\u003e"
+          }
+        ]
+      },
+      "apps": [],
+      "jobName": "paragraph_1558740586130_100953689",
+      "id": "20190524-162946_1779279677",
+      "dateCreated": "2019-05-24 16:29:46.130",
+      "dateStarted": "2019-05-24 16:29:57.203",
+      "dateFinished": "2019-05-24 16:29:57.207",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "import com.microsoft.ml.spark.{TrainClassifier,ComputeModelStatistics, TrainedClassifierModel}\nimport scala.io.Source\nimport org.apache.spark.sql.{Dataset, SparkSession}\nimport spark.implicits._\nimport org.apache.spark.sql.types._\nimport org.apache.spark.ml.classification.LogisticRegression",
+      "user": "admin",
+      "dateUpdated": "2019-05-24 16:21:04.561",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/scala"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "import com.microsoft.ml.spark.{TrainClassifier, ComputeModelStatistics, TrainedClassifierModel}\nimport scala.io.Source\nimport org.apache.spark.sql.{Dataset, SparkSession}\nimport spark.implicits._\nimport org.apache.spark.sql.types._\nimport org.apache.spark.ml.classification.LogisticRegression\n"
+          }
+        ]
+      },
+      "apps": [],
+      "jobName": "paragraph_1558657503149_882244572",
+      "id": "20190523-172503_672281001",
+      "dateCreated": "2019-05-23 17:25:03.149",
+      "dateStarted": "2019-05-24 16:21:04.572",
+      "dateFinished": "2019-05-24 16:21:05.684",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "%md \n\nNow let\u0027s read the data and split it to train and test sets:\n",
+      "user": "admin",
+      "dateUpdated": "2019-05-24 16:08:53.835",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "editorMode": "ace/mode/markdown",
+        "editorHide": true,
+        "tableHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "\u003cdiv class\u003d\"markdown-body\"\u003e\n\u003cp\u003eNow let\u0026rsquo;s read the data and split it to train and test sets:\u003c/p\u003e\n\u003c/div\u003e"
+          }
+        ]
+      },
+      "apps": [],
+      "jobName": "paragraph_1558739330754_-1373053460",
+      "id": "20190524-160850_171105258",
+      "dateCreated": "2019-05-24 16:08:50.754",
+      "dateStarted": "2019-05-24 16:08:53.836",
+      "dateFinished": "2019-05-24 16:09:06.740",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "val dataFilePath \u003d \"AdultCensusIncome.csv\"\nval strData \u003d scala.io.Source.fromURL(\"https://mmlspark.azureedge.net/datasets/\" + dataFilePath).mkString\nval listData \u003d strData.split(\"\\n\").filter(_ !\u003d \"\")\nval csvDS \u003d sc.parallelize(listData).toDS\n\nval schema \u003d StructType(Seq(\n  StructField(\"age\", IntegerType, true),\n  StructField(\"workclass\", StringType, true),\n  StructField(\"fnlwgt\", DoubleType, true),\n  StructField(\"education\", StringType, true),\n  StructField(\"education-num\", DoubleType, true),\n  StructField(\"marital-status\", StringType, true),\n  StructField(\"occupation\", StringType, true),\n  StructField(\"relationship\", StringType, true),\n  StructField(\"race\", StringType, true),\n  StructField(\"sex\", StringType, true),\n  StructField(\"capital-gain\", DoubleType, true),\n  StructField(\"capital-loss\", DoubleType, true),\n  StructField(\"hours-per-week\", DoubleType, true),\n  StructField(\"native-country\", StringType, true),\n  StructField(\"income\", StringType, true)))\n  \nval df \u003d spark.read.option(\"header\", true).option(\"inferSchema\",false).option(\"treatEmptyValuesAsNulls\", \"false\").schema(schema).csv(csvDS)\nval data \u003d df.select($\"education\", $\"marital-status\", $\"hours-per-week\", $\"income\")\nval Array(train, test) \u003d data.randomSplit(Array(0.75, 0.25), seed\u003d123)\n\nz.show(data.limit(10))",
+      "user": "admin",
+      "dateUpdated": "2019-05-24 16:12:37.703",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 300.0,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "education": "string",
+                      "marital-status": "string",
+                      "hours-per-week": "string",
+                      "income": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          }
+        },
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/scala"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TABLE",
+            "data": "education\tmarital-status\thours-per-week\tincome\n Bachelors\t Never-married\t40.0\t \u003c\u003d50K\r\n Bachelors\t Married-civ-spouse\t13.0\t \u003c\u003d50K\r\n HS-grad\t Divorced\t40.0\t \u003c\u003d50K\r\n 11th\t Married-civ-spouse\t40.0\t \u003c\u003d50K\r\n Bachelors\t Married-civ-spouse\t40.0\t \u003c\u003d50K\r\n Masters\t Married-civ-spouse\t40.0\t \u003c\u003d50K\r\n 9th\t Married-spouse-absent\t16.0\t \u003c\u003d50K\r\n HS-grad\t Married-civ-spouse\t45.0\t \u003e50K\r\n Masters\t Never-married\t50.0\t \u003e50K\r\n Bachelors\t Married-civ-spouse\t40.0\t \u003e50K\r\n"
+          },
+          {
+            "type": "TEXT",
+            "data": "dataFilePath: String \u003d AdultCensusIncome.csv\nstrData: String \u003d\nage, workclass, fnlwgt, education, education-num, marital-status, occupation, relationship, race, sex, capital-gain, capital-loss, hours-per-week, native-country, income\n39, State-gov, 77516, Bachelors, 13, Never-married, Adm-clerical, Not-in-family, White, Male, 2174, 0, 40, United-States, \u003c\u003d50K\n50, Self-emp-not-inc, 83311, Bachelors, 13, Married-civ-spouse, Exec-managerial, Husband, White, Male, 0, 0, 13, United-States, \u003c\u003d50K\n38, Private, 215646, HS-grad, 9, Divorced, Handlers-cleaners, Not-in-family, White, Male, 0, 0, 40, United-States, \u003c\u003d50K\n53, Private, 234721, 11th, 7, Married-civ-spouse, Handlers-cleaners, Husband, Black, Male, 0, 0, 40, United-States, \u003c\u003d50K\n28, Private, 338409, Bachelors, 13, Married-civ-spouse, Pro..."
+          }
+        ]
+      },
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            "http://192.168.86.152:4040/jobs/job?id\u003d50",
+            "http://192.168.86.152:4040/jobs/job?id\u003d51"
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "apps": [],
+      "jobName": "paragraph_1558657530356_-1525022437",
+      "id": "20190523-172530_1022344373",
+      "dateCreated": "2019-05-23 17:25:30.357",
+      "dateStarted": "2019-05-24 16:12:37.766",
+      "dateFinished": "2019-05-24 16:12:39.588",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "%md\nTrainClassifier can be used to initialize and fit a model. It wraps SparkML classifiers.\n\nNote that it implicitly converts the data into the format expected by the algorithm: tokenize and hash strings, one-hot encodes categorical variables, assembles the features into a vector and so on. The parameter `numFeatures` controls the number of hashed features.\n",
+      "user": "admin",
+      "dateUpdated": "2019-05-24 16:30:42.411",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "editorMode": "ace/mode/markdown",
+        "editorHide": true,
+        "tableHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "\u003cdiv class\u003d\"markdown-body\"\u003e\n\u003cp\u003eTrainClassifier can be used to initialize and fit a model. It wraps SparkML classifiers.\u003c/p\u003e\n\u003cp\u003eNote that it implicitly converts the data into the format expected by the algorithm: tokenize and hash strings, one-hot encodes categorical variables, assembles the features into a vector and so on. The parameter \u003ccode\u003enumFeatures\u003c/code\u003e controls the number of hashed features.\u003c/p\u003e\n\u003c/div\u003e"
+          }
+        ]
+      },
+      "apps": [],
+      "jobName": "paragraph_1558737545857_671296839",
+      "id": "20190524-153905_1764382828",
+      "dateCreated": "2019-05-24 15:39:05.857",
+      "dateStarted": "2019-05-24 16:30:42.412",
+      "dateFinished": "2019-05-24 16:30:42.423",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "val lr \u003d new LogisticRegression\nval model \u003d new TrainClassifier().setModel(lr).setLabelCol(\"income\").setNumFeatures(256).fit(train)\n// You can save and load the model as needed\n// model.write.overwrite().save(\"adultclassification.mml\")\n// val loadedModel \u003d TrainedClassifierModel.load(\"adultCensusIncomeModel.mml\")",
+      "user": "admin",
+      "dateUpdated": "2019-05-24 16:30:54.358",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/scala"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TEXT",
+            "data": "lr: org.apache.spark.ml.classification.LogisticRegression \u003d logreg_8673da619007\nmodel: com.microsoft.ml.spark.TrainedClassifierModel \u003d TrainClassifier_a51e04e7456d\n"
+          }
+        ]
+      },
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            "http://192.168.86.152:4040/jobs/job?id\u003d844",
+            "http://192.168.86.152:4040/jobs/job?id\u003d845",
+            "http://192.168.86.152:4040/jobs/job?id\u003d846",
+            "http://192.168.86.152:4040/jobs/job?id\u003d847",
+            "http://192.168.86.152:4040/jobs/job?id\u003d848",
+            "http://192.168.86.152:4040/jobs/job?id\u003d849",
+            "http://192.168.86.152:4040/jobs/job?id\u003d850",
+            "http://192.168.86.152:4040/jobs/job?id\u003d851",
+            "http://192.168.86.152:4040/jobs/job?id\u003d852",
+            "http://192.168.86.152:4040/jobs/job?id\u003d853",
+            "http://192.168.86.152:4040/jobs/job?id\u003d854",
+            "http://192.168.86.152:4040/jobs/job?id\u003d855",
+            "http://192.168.86.152:4040/jobs/job?id\u003d856",
+            "http://192.168.86.152:4040/jobs/job?id\u003d857",
+            "http://192.168.86.152:4040/jobs/job?id\u003d858",
+            "http://192.168.86.152:4040/jobs/job?id\u003d859",
+            "http://192.168.86.152:4040/jobs/job?id\u003d860",
+            "http://192.168.86.152:4040/jobs/job?id\u003d861",
+            "http://192.168.86.152:4040/jobs/job?id\u003d862",
+            "http://192.168.86.152:4040/jobs/job?id\u003d863",
+            "http://192.168.86.152:4040/jobs/job?id\u003d864",
+            "http://192.168.86.152:4040/jobs/job?id\u003d865",
+            "http://192.168.86.152:4040/jobs/job?id\u003d866",
+            "http://192.168.86.152:4040/jobs/job?id\u003d867",
+            "http://192.168.86.152:4040/jobs/job?id\u003d868",
+            "http://192.168.86.152:4040/jobs/job?id\u003d869",
+            "http://192.168.86.152:4040/jobs/job?id\u003d870",
+            "http://192.168.86.152:4040/jobs/job?id\u003d871",
+            "http://192.168.86.152:4040/jobs/job?id\u003d872",
+            "http://192.168.86.152:4040/jobs/job?id\u003d873",
+            "http://192.168.86.152:4040/jobs/job?id\u003d874",
+            "http://192.168.86.152:4040/jobs/job?id\u003d875",
+            "http://192.168.86.152:4040/jobs/job?id\u003d876",
+            "http://192.168.86.152:4040/jobs/job?id\u003d877",
+            "http://192.168.86.152:4040/jobs/job?id\u003d878",
+            "http://192.168.86.152:4040/jobs/job?id\u003d879",
+            "http://192.168.86.152:4040/jobs/job?id\u003d880",
+            "http://192.168.86.152:4040/jobs/job?id\u003d881",
+            "http://192.168.86.152:4040/jobs/job?id\u003d882",
+            "http://192.168.86.152:4040/jobs/job?id\u003d883",
+            "http://192.168.86.152:4040/jobs/job?id\u003d884",
+            "http://192.168.86.152:4040/jobs/job?id\u003d885",
+            "http://192.168.86.152:4040/jobs/job?id\u003d886",
+            "http://192.168.86.152:4040/jobs/job?id\u003d887",
+            "http://192.168.86.152:4040/jobs/job?id\u003d888",
+            "http://192.168.86.152:4040/jobs/job?id\u003d889",
+            "http://192.168.86.152:4040/jobs/job?id\u003d890",
+            "http://192.168.86.152:4040/jobs/job?id\u003d891",
+            "http://192.168.86.152:4040/jobs/job?id\u003d892",
+            "http://192.168.86.152:4040/jobs/job?id\u003d893",
+            "http://192.168.86.152:4040/jobs/job?id\u003d894",
+            "http://192.168.86.152:4040/jobs/job?id\u003d895",
+            "http://192.168.86.152:4040/jobs/job?id\u003d896",
+            "http://192.168.86.152:4040/jobs/job?id\u003d897",
+            "http://192.168.86.152:4040/jobs/job?id\u003d898",
+            "http://192.168.86.152:4040/jobs/job?id\u003d899",
+            "http://192.168.86.152:4040/jobs/job?id\u003d900",
+            "http://192.168.86.152:4040/jobs/job?id\u003d901",
+            "http://192.168.86.152:4040/jobs/job?id\u003d902",
+            "http://192.168.86.152:4040/jobs/job?id\u003d903",
+            "http://192.168.86.152:4040/jobs/job?id\u003d904",
+            "http://192.168.86.152:4040/jobs/job?id\u003d905",
+            "http://192.168.86.152:4040/jobs/job?id\u003d906",
+            "http://192.168.86.152:4040/jobs/job?id\u003d907",
+            "http://192.168.86.152:4040/jobs/job?id\u003d908",
+            "http://192.168.86.152:4040/jobs/job?id\u003d909",
+            "http://192.168.86.152:4040/jobs/job?id\u003d910",
+            "http://192.168.86.152:4040/jobs/job?id\u003d911",
+            "http://192.168.86.152:4040/jobs/job?id\u003d912",
+            "http://192.168.86.152:4040/jobs/job?id\u003d913",
+            "http://192.168.86.152:4040/jobs/job?id\u003d914",
+            "http://192.168.86.152:4040/jobs/job?id\u003d915",
+            "http://192.168.86.152:4040/jobs/job?id\u003d916",
+            "http://192.168.86.152:4040/jobs/job?id\u003d917",
+            "http://192.168.86.152:4040/jobs/job?id\u003d918",
+            "http://192.168.86.152:4040/jobs/job?id\u003d919",
+            "http://192.168.86.152:4040/jobs/job?id\u003d920",
+            "http://192.168.86.152:4040/jobs/job?id\u003d921",
+            "http://192.168.86.152:4040/jobs/job?id\u003d922",
+            "http://192.168.86.152:4040/jobs/job?id\u003d923",
+            "http://192.168.86.152:4040/jobs/job?id\u003d924",
+            "http://192.168.86.152:4040/jobs/job?id\u003d925",
+            "http://192.168.86.152:4040/jobs/job?id\u003d926",
+            "http://192.168.86.152:4040/jobs/job?id\u003d927",
+            "http://192.168.86.152:4040/jobs/job?id\u003d928",
+            "http://192.168.86.152:4040/jobs/job?id\u003d929",
+            "http://192.168.86.152:4040/jobs/job?id\u003d930",
+            "http://192.168.86.152:4040/jobs/job?id\u003d931",
+            "http://192.168.86.152:4040/jobs/job?id\u003d932",
+            "http://192.168.86.152:4040/jobs/job?id\u003d933",
+            "http://192.168.86.152:4040/jobs/job?id\u003d934",
+            "http://192.168.86.152:4040/jobs/job?id\u003d935",
+            "http://192.168.86.152:4040/jobs/job?id\u003d936",
+            "http://192.168.86.152:4040/jobs/job?id\u003d937",
+            "http://192.168.86.152:4040/jobs/job?id\u003d938",
+            "http://192.168.86.152:4040/jobs/job?id\u003d939",
+            "http://192.168.86.152:4040/jobs/job?id\u003d940",
+            "http://192.168.86.152:4040/jobs/job?id\u003d941",
+            "http://192.168.86.152:4040/jobs/job?id\u003d942",
+            "http://192.168.86.152:4040/jobs/job?id\u003d943",
+            "http://192.168.86.152:4040/jobs/job?id\u003d944",
+            "http://192.168.86.152:4040/jobs/job?id\u003d945",
+            "http://192.168.86.152:4040/jobs/job?id\u003d946",
+            "http://192.168.86.152:4040/jobs/job?id\u003d947",
+            "http://192.168.86.152:4040/jobs/job?id\u003d948",
+            "http://192.168.86.152:4040/jobs/job?id\u003d949",
+            "http://192.168.86.152:4040/jobs/job?id\u003d950",
+            "http://192.168.86.152:4040/jobs/job?id\u003d951",
+            "http://192.168.86.152:4040/jobs/job?id\u003d952",
+            "http://192.168.86.152:4040/jobs/job?id\u003d953",
+            "http://192.168.86.152:4040/jobs/job?id\u003d954",
+            "http://192.168.86.152:4040/jobs/job?id\u003d955",
+            "http://192.168.86.152:4040/jobs/job?id\u003d956",
+            "http://192.168.86.152:4040/jobs/job?id\u003d957",
+            "http://192.168.86.152:4040/jobs/job?id\u003d958",
+            "http://192.168.86.152:4040/jobs/job?id\u003d959",
+            "http://192.168.86.152:4040/jobs/job?id\u003d960",
+            "http://192.168.86.152:4040/jobs/job?id\u003d961",
+            "http://192.168.86.152:4040/jobs/job?id\u003d962",
+            "http://192.168.86.152:4040/jobs/job?id\u003d963",
+            "http://192.168.86.152:4040/jobs/job?id\u003d964",
+            "http://192.168.86.152:4040/jobs/job?id\u003d965",
+            "http://192.168.86.152:4040/jobs/job?id\u003d966",
+            "http://192.168.86.152:4040/jobs/job?id\u003d967",
+            "http://192.168.86.152:4040/jobs/job?id\u003d968",
+            "http://192.168.86.152:4040/jobs/job?id\u003d969",
+            "http://192.168.86.152:4040/jobs/job?id\u003d970",
+            "http://192.168.86.152:4040/jobs/job?id\u003d971",
+            "http://192.168.86.152:4040/jobs/job?id\u003d972",
+            "http://192.168.86.152:4040/jobs/job?id\u003d973",
+            "http://192.168.86.152:4040/jobs/job?id\u003d974",
+            "http://192.168.86.152:4040/jobs/job?id\u003d975",
+            "http://192.168.86.152:4040/jobs/job?id\u003d976",
+            "http://192.168.86.152:4040/jobs/job?id\u003d977",
+            "http://192.168.86.152:4040/jobs/job?id\u003d978",
+            "http://192.168.86.152:4040/jobs/job?id\u003d979",
+            "http://192.168.86.152:4040/jobs/job?id\u003d980",
+            "http://192.168.86.152:4040/jobs/job?id\u003d981",
+            "http://192.168.86.152:4040/jobs/job?id\u003d982",
+            "http://192.168.86.152:4040/jobs/job?id\u003d983",
+            "http://192.168.86.152:4040/jobs/job?id\u003d984",
+            "http://192.168.86.152:4040/jobs/job?id\u003d985",
+            "http://192.168.86.152:4040/jobs/job?id\u003d986"
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "apps": [],
+      "jobName": "paragraph_1558736291017_-1515471822",
+      "id": "20190524-151811_1456028740",
+      "dateCreated": "2019-05-24 15:18:11.018",
+      "dateStarted": "2019-05-24 16:30:54.369",
+      "dateFinished": "2019-05-24 16:31:10.158",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "%md\nAfter the model is trained, we score it against the test dataset and view metrics.",
+      "user": "admin",
+      "dateUpdated": "2019-05-24 16:23:29.509",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {},
+        "editorSetting": {
+          "language": "markdown",
+          "editOnDblClick": true,
+          "completionKey": "TAB",
+          "completionSupport": false
+        },
+        "editorMode": "ace/mode/markdown",
+        "editorHide": true,
+        "tableHide": false
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "HTML",
+            "data": "\u003cdiv class\u003d\"markdown-body\"\u003e\n\u003cp\u003eAfter the model is trained, we score it against the test dataset and view metrics.\u003c/p\u003e\n\u003c/div\u003e"
+          }
+        ]
+      },
+      "apps": [],
+      "jobName": "paragraph_1558739685319_-466914917",
+      "id": "20190524-161445_830317066",
+      "dateCreated": "2019-05-24 16:14:45.319",
+      "dateStarted": "2019-05-24 16:20:33.177",
+      "dateFinished": "2019-05-24 16:20:33.187",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    },
+    {
+      "text": "val prediction \u003d model.transform(test)\nval metrics \u003d new ComputeModelStatistics().transform(prediction)\nz.show(metrics.drop(\"confusion_matrix\").limit(1))",
+      "user": "admin",
+      "dateUpdated": "2019-05-24 16:32:26.948",
+      "config": {
+        "colWidth": 12.0,
+        "fontSize": 9.0,
+        "enabled": true,
+        "results": {
+          "0": {
+            "graph": {
+              "mode": "table",
+              "height": 84.5,
+              "optionOpen": false,
+              "setting": {
+                "table": {
+                  "tableGridState": {},
+                  "tableColumnTypeState": {
+                    "names": {
+                      "evaluation_type": "string",
+                      "accuracy": "string",
+                      "precision": "string",
+                      "recall": "string",
+                      "AUC": "string"
+                    },
+                    "updated": false
+                  },
+                  "tableOptionSpecHash": "[{\"name\":\"useFilter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable filter for columns\"},{\"name\":\"showPagination\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable pagination for better navigation\"},{\"name\":\"showAggregationFooter\",\"valueType\":\"boolean\",\"defaultValue\":false,\"widget\":\"checkbox\",\"description\":\"Enable a footer for displaying aggregated values\"}]",
+                  "tableOptionValue": {
+                    "useFilter": false,
+                    "showPagination": false,
+                    "showAggregationFooter": false
+                  },
+                  "updated": false,
+                  "initialized": false
+                }
+              },
+              "commonSetting": {}
+            }
+          },
+          "1": {
+            "graph": {
+              "mode": "table",
+              "height": 90.8,
+              "optionOpen": false
+            }
+          }
+        },
+        "editorSetting": {
+          "language": "scala",
+          "editOnDblClick": false,
+          "completionKey": "TAB",
+          "completionSupport": true
+        },
+        "editorMode": "ace/mode/scala"
+      },
+      "settings": {
+        "params": {},
+        "forms": {}
+      },
+      "results": {
+        "code": "SUCCESS",
+        "msg": [
+          {
+            "type": "TABLE",
+            "data": "evaluation_type\taccuracy\tprecision\trecall\tAUC\nClassification\t0.8231527093596059\t0.6671698113207547\t0.4704630122405535\t0.5470916331331912\n"
+          },
+          {
+            "type": "TEXT",
+            "data": "prediction: org.apache.spark.sql.DataFrame \u003d [education: string, marital-status: string ... 4 more fields]\nmetrics: org.apache.spark.sql.DataFrame \u003d [evaluation_type: string, confusion_matrix: matrix ... 4 more fields]\n"
+          }
+        ]
+      },
+      "runtimeInfos": {
+        "jobUrl": {
+          "propertyName": "jobUrl",
+          "label": "SPARK JOB",
+          "tooltip": "View in Spark web UI",
+          "group": "spark",
+          "values": [
+            "http://192.168.86.152:4040/jobs/job?id\u003d997",
+            "http://192.168.86.152:4040/jobs/job?id\u003d998",
+            "http://192.168.86.152:4040/jobs/job?id\u003d999",
+            "http://192.168.86.152:4040/jobs/job?id\u003d1000",
+            "http://192.168.86.152:4040/jobs/job?id\u003d1001",
+            "http://192.168.86.152:4040/jobs/job?id\u003d1002",
+            "http://192.168.86.152:4040/jobs/job?id\u003d1003",
+            "http://192.168.86.152:4040/jobs/job?id\u003d1004",
+            "http://192.168.86.152:4040/jobs/job?id\u003d1005",
+            "http://192.168.86.152:4040/jobs/job?id\u003d1006"
+          ],
+          "interpreterSettingId": "spark"
+        }
+      },
+      "apps": [],
+      "jobName": "paragraph_1558739939962_1578028212",
+      "id": "20190524-161859_1100073829",
+      "dateCreated": "2019-05-24 16:18:59.962",
+      "dateStarted": "2019-05-24 16:32:14.552",
+      "dateFinished": "2019-05-24 16:32:15.947",
+      "status": "FINISHED",
+      "progressUpdateIntervalMs": 500
+    }
+  ],
+  "name": "Classification - Adult Census",
+  "id": "2ECAJQRJ8",
+  "noteParams": {},
+  "noteForms": {},
+  "angularObjects": {
+    "md:shared_process": [],
+    "sh:shared_process": [],
+    "spark:shared_process": []
+  },
+  "config": {
+    "isZeppelinNotebookCronEnable": false
+  },
+  "info": {}
+}
