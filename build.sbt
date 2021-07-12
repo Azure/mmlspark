@@ -41,7 +41,7 @@ libraryDependencies ++= Seq(
   "com.microsoft.cognitiveservices.speech" % "client-sdk" % "1.14.0",
   // TA SDK (latest preview) https://mvnrepository.com/artifact/com.azure/azure-ai-textanalytics/5.1.0-beta.7
   // |
-  // V
+  //
   "com.azure" % "azure-ai-textanalytics" % "5.1.0-beta.7",
   "org.apache.httpcomponents" % "httpclient" % "4.5.6",
   "org.apache.httpcomponents" % "httpmime" % "4.5.6",
